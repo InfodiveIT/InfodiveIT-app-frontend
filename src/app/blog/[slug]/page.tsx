@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Clock, ExternalLink, Package, Play, User } from "lucide-react";
+import { ArrowLeft, BookOpen, CalendarDays, Clock, ExternalLink, Package, Play, User } from "lucide-react";
 import {
   type ArtigoBloco,
   type Artigo,
@@ -219,6 +219,8 @@ async function getRelacionados(currentSlug: string, limit = 3): Promise<Artigo[]
   }
 }
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
@@ -317,11 +319,11 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
   }
 
   const { artigo, publicadoEmIso } = result;
-  const config = TIPO_CONFIG[artigo.tipo];
-  const Icon = config.icon;
+  const config = (artigo.tipo && TIPO_CONFIG[artigo.tipo]) ? TIPO_CONFIG[artigo.tipo] : TIPO_CONFIG.artigo;
+  const Icon = config.icon || BookOpen;
   const relacionados = await getRelacionados(artigo.slug);
 
-  const isoDate = publicadoEmIso.split('T')[0];
+  const isoDate = (publicadoEmIso || new Date().toISOString()).split('T')[0];
   const blogJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
