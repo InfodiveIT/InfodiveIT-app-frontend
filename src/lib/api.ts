@@ -119,10 +119,13 @@ export type ProdutoResumoDTO = {
   imagemUrl?: string
   destaque: boolean
   novidade?: boolean
+  categoriaId?: string
   categoriaSlug: string
   categoriaTitle?: string
+  solucaoId?: string
   solucaoSlug?: string
   solucaoTitle?: string
+  fabricanteId?: string
   fabricanteSlug: string
   fabricanteNome?: string
   fabricanteLogoUrl?: string

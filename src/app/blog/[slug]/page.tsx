@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Clock, ExternalLink, Play, User } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock, ExternalLink, Package, Play, User } from "lucide-react";
 import {
   type ArtigoBloco,
   type Artigo,
@@ -44,13 +44,29 @@ async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso
     const dto = await api.conteudo(slug);
     if (!dto || !dto.ativo) return null;
 
-    const [categorias, fabricantes] = await Promise.all([
+    const [categorias, fabricantes, produtosPage] = await Promise.all([
       api.solucoes().catch(() => []),
-      api.fabricantes().catch(() => [])
+      api.fabricantes().catch(() => []),
+      api.produtos({ size: 100 }).catch(() => null),
     ]);
+    const produtos = produtosPage?.content || [];
 
-    const categoriaObj = categorias.find((c) => c.id === dto.categoriaId);
-    const fabricanteObj = fabricantes.find((f) => f.id === dto.fabricanteId);
+    const produtoObj = dto.produtoId ? produtos.find((p) => p.id === dto.produtoId) : null;
+    let categoriaObj = dto.categoriaId ? categorias.find((c) => c.id === dto.categoriaId) : null;
+    let fabricanteObj = dto.fabricanteId ? fabricantes.find((f) => f.id === dto.fabricanteId) : null;
+
+    if (!categoriaObj && produtoObj) {
+      const catId = produtoObj.solucaoId || produtoObj.categoriaId;
+      if (catId) {
+        categoriaObj = categorias.find((c) => c.id === catId) || null;
+      }
+    }
+
+    if (!fabricanteObj && produtoObj) {
+      if (produtoObj.fabricanteId) {
+        fabricanteObj = fabricantes.find((f) => f.id === produtoObj.fabricanteId) || null;
+      }
+    }
 
     let blocos: ArtigoBloco[] = [];
     if (dto.conteudo) {
@@ -77,6 +93,15 @@ async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso
       autor: dto.autor ?? "Equipe Infodive",
       tempoLeitura: dto.tempoLeitura ?? "",
       conteudo: blocos,
+      produto: produtoObj ? {
+        id: produtoObj.id,
+        nome: produtoObj.nome,
+        slug: produtoObj.slug,
+        descricaoCurta: produtoObj.descricaoCurta,
+        imagemUrl: produtoObj.imagemUrl,
+        fabricanteNome: fabricanteObj?.nome,
+        categoriaNome: categoriaObj?.nome,
+      } : undefined,
     };
 
     return { artigo, publicadoEmIso: dto.publicadoEm || new Date().toISOString() };
@@ -90,14 +115,31 @@ async function getRelacionados(currentSlug: string, limit = 3): Promise<Artigo[]
     const page = await api.conteudos({ size: 10 });
     const filtrados = page.content.filter((c) => c.slug !== currentSlug);
 
-    const [categorias, fabricantes] = await Promise.all([
+    const [categorias, fabricantes, produtosPage] = await Promise.all([
       api.solucoes().catch(() => []),
-      api.fabricantes().catch(() => [])
+      api.fabricantes().catch(() => []),
+      api.produtos({ size: 100 }).catch(() => null),
     ]);
+    const produtos = produtosPage?.content || [];
 
     return filtrados.slice(0, limit).map((dto) => {
-      const categoriaObj = categorias.find((c) => c.id === dto.categoriaId);
-      const fabricanteObj = fabricantes.find((f) => f.id === dto.fabricanteId);
+      const produtoObj = dto.produtoId ? produtos.find((p) => p.id === dto.produtoId) : null;
+      let categoriaObj = dto.categoriaId ? categorias.find((c) => c.id === dto.categoriaId) : null;
+      let fabricanteObj = dto.fabricanteId ? fabricantes.find((f) => f.id === dto.fabricanteId) : null;
+
+      if (!categoriaObj && produtoObj) {
+        const catId = produtoObj.solucaoId || produtoObj.categoriaId;
+        if (catId) {
+          categoriaObj = categorias.find((c) => c.id === catId) || null;
+        }
+      }
+
+      if (!fabricanteObj && produtoObj) {
+        if (produtoObj.fabricanteId) {
+          fabricanteObj = fabricantes.find((f) => f.id === produtoObj.fabricanteId) || null;
+        }
+      }
+
       return {
         slug: dto.slug,
         tipo: TIPO_MAP[dto.tipo] ?? "artigo",
@@ -114,6 +156,15 @@ async function getRelacionados(currentSlug: string, limit = 3): Promise<Artigo[]
         autor: dto.autor ?? "Equipe Infodive",
         tempoLeitura: dto.tempoLeitura ?? "",
         conteudo: [],
+        produto: produtoObj ? {
+          id: produtoObj.id,
+          nome: produtoObj.nome,
+          slug: produtoObj.slug,
+          descricaoCurta: produtoObj.descricaoCurta,
+          imagemUrl: produtoObj.imagemUrl,
+          fabricanteNome: fabricanteObj?.nome,
+          categoriaNome: categoriaObj?.nome,
+        } : undefined,
       };
     });
   } catch (e) {
@@ -277,7 +328,7 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
                     Conteúdos
                   </Link>
                   <span>/</span>
-                  <span className="text-white/70">{artigo.categoria}</span>
+                  <span className="text-white/70">{artigo.categoria || artigo.fabricante || "Infodive"}</span>
                 </nav>
               </Reveal>
 
@@ -317,9 +368,11 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
               {/* Meta */}
               <Reveal delay={0.26}>
                 <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-500">
-                  <span className="font-medium uppercase tracking-wide text-[#7aa9ff]">
-                    {artigo.categoria} • {artigo.fabricante}
-                  </span>
+                  {Boolean(artigo.categoria || artigo.fabricante) && (
+                    <span className="font-medium uppercase tracking-wide text-[#7aa9ff]">
+                      {[artigo.categoria, artigo.fabricante].filter(Boolean).join(" • ")}
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5" aria-hidden />
                     {artigo.autor}
@@ -392,6 +445,59 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
                   <Bloco key={index} bloco={bloco} />
                 ))}
               </div>
+
+              {/* Card de Produto Relacionado */}
+              {artigo.produto && (
+                <div className="mt-12 overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-[#050811] via-[#0D1221] to-[#0A101D] p-6 text-white shadow-xl sm:p-8">
+                  <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-1 items-start gap-4">
+                      {artigo.produto.imagemUrl ? (
+                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-black/40 p-2 sm:h-24 sm:w-24">
+                          <Image
+                            src={artigo.produto.imagemUrl}
+                            alt={artigo.produto.nome}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-brand/10 border border-brand/20 text-brand sm:h-20 sm:w-20">
+                          <Package className="h-8 w-8" />
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center rounded bg-brand/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand">
+                            Produto Relacionado
+                          </span>
+                          {artigo.produto.fabricanteNome && (
+                            <span className="text-xs font-semibold text-white/60">
+                              {artigo.produto.fabricanteNome}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-xl font-bold text-white sm:text-2xl">
+                          {artigo.produto.nome}
+                        </h3>
+                        {artigo.produto.descricaoCurta && (
+                          <p className="line-clamp-2 text-sm text-ink-300">
+                            {artigo.produto.descricaoCurta}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="shrink-0 pt-2 sm:pt-0">
+                      <Link
+                        href={`/produtos/${artigo.produto.slug}`}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 font-semibold text-white shadow-lg shadow-brand/25 transition-all duration-200 hover:bg-brand-deep hover:shadow-brand/40 sm:w-auto text-sm"
+                      >
+                        <span>Ver produto</span>
+                        <ArrowLeft className="h-4 w-4 rotate-180" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Bloco Saiba Mais se houver link externo para tipos não-vídeo */}
               {artigo.tipo !== "video" && artigo.urlExterna && (

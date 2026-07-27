@@ -15,21 +15,54 @@ const TIPO_MAP: Record<string, TipoConteudo> = {
   VIDEO: "video",
 };
 
-function conteudoToArtigo(dto: ConteudoDTO): Artigo {
+function conteudoToArtigo(
+  dto: ConteudoDTO,
+  categorias: { id: string; nome: string }[] = [],
+  fabricantes: { id: string; nome: string }[] = [],
+  produtos: { id: string; nome: string; solucaoId?: string; fabricanteId?: string; categoriaId?: string }[] = []
+): Artigo {
+  const produtoObj = dto.produtoId ? produtos.find((p) => p.id === dto.produtoId) : null;
+  let categoriaObj = dto.categoriaId ? categorias.find((c) => c.id === dto.categoriaId) : null;
+  let fabricanteObj = dto.fabricanteId ? fabricantes.find((f) => f.id === dto.fabricanteId) : null;
+
+  if (!categoriaObj && produtoObj) {
+    const catId = produtoObj.solucaoId || produtoObj.categoriaId;
+    if (catId) {
+      categoriaObj = categorias.find((c) => c.id === catId) || null;
+    }
+  }
+
+  if (!fabricanteObj && produtoObj) {
+    if (produtoObj.fabricanteId) {
+      fabricanteObj = fabricantes.find((f) => f.id === produtoObj.fabricanteId) || null;
+    }
+  }
+
   return {
     slug: dto.slug,
     tipo: (TIPO_MAP[dto.tipo] || dto.tipo.toLowerCase()) as TipoConteudo,
-    categoria: dto.categoriaId || "",
-    fabricante: dto.fabricanteId || "",
+    categoria: categoriaObj ? categoriaObj.nome : "",
+    fabricante: fabricanteObj ? fabricanteObj.nome : "",
     titulo: dto.titulo,
     descricao: dto.descricao || "",
     data: dto.publicadoEm
       ? new Date(dto.publicadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
       : "",
     imagemBg: dto.imagemUrl || "#0D1221",
+    imagemUrl: dto.imagemUrl,
+    urlExterna: dto.urlExterna,
     autor: dto.autor || "Equipe Infodive",
     tempoLeitura: dto.tempoLeitura || "",
     conteudo: [],
+    produto: produtoObj ? {
+      id: produtoObj.id,
+      nome: produtoObj.nome,
+      slug: (produtoObj as any).slug || "",
+      descricaoCurta: (produtoObj as any).descricaoCurta,
+      imagemUrl: (produtoObj as any).imagemUrl,
+      fabricanteNome: fabricanteObj?.nome,
+      categoriaNome: categoriaObj?.nome,
+    } : undefined,
   };
 }
 
@@ -50,11 +83,17 @@ export function BlogArtigos() {
       }
     } catch {}
 
-    api.conteudos({ size: 50 })
-      .then((page) => {
+    Promise.all([
+      api.conteudos({ size: 50 }),
+      api.solucoes().catch(() => []),
+      api.fabricantes().catch(() => []),
+      api.produtos({ size: 100 }).catch(() => null),
+    ])
+      .then(([page, solucoesList, fabricantesList, produtosPage]) => {
+        const prods = produtosPage?.content || [];
         const mapped = page.content
           .filter((dto) => TIPO_MAP[dto.tipo])
-          .map(conteudoToArtigo);
+          .map((dto) => conteudoToArtigo(dto, solucoesList, fabricantesList, prods));
         if (mapped.length > 0) {
           setArtigos(mapped);
           try {

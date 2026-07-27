@@ -67,9 +67,11 @@ export function ArtigoCard({ artigo }: { artigo: Artigo }) {
 
       {/* Corpo */}
       <div className="flex flex-1 flex-col p-5">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-500">
-          {artigo.categoria} • {artigo.fabricante}
-        </p>
+        {Boolean(artigo.categoria || artigo.fabricante) && (
+          <p className="text-[11px] font-medium uppercase tracking-wide text-ink-500">
+            {[artigo.categoria, artigo.fabricante].filter(Boolean).join(" • ")}
+          </p>
+        )}
         <h3 className="mt-2 text-[17px] font-semibold leading-[1.4] text-ink-950">
           {artigo.titulo}
         </h3>

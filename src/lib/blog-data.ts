@@ -21,6 +21,16 @@ export type ArtigoBloco =
   | { tipo: "lista"; itens: string[] }
   | { tipo: "citacao"; texto: string };
 
+export type ArtigoProduto = {
+  id: string;
+  nome: string;
+  slug: string;
+  descricaoCurta?: string;
+  imagemUrl?: string;
+  fabricanteNome?: string;
+  categoriaNome?: string;
+};
+
 export type Artigo = {
   slug: string;
   tipo: TipoConteudo;
@@ -35,6 +45,7 @@ export type Artigo = {
   autor: string;
   tempoLeitura: string;
   conteudo: ArtigoBloco[];
+  produto?: ArtigoProduto;
 };
 
 /** Configuração visual por tipo: rótulo, cores do badge e ícone temático. */
