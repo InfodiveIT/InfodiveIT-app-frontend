@@ -39,6 +39,57 @@ function getYouTubeEmbedUrl(url?: string): string | null {
   return null;
 }
 
+function parseMarkdownToBlocos(text?: string): ArtigoBloco[] {
+  if (!text || !text.trim()) return [];
+
+  if (text.trim().startsWith("[")) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.tipo) {
+        return parsed;
+      }
+    } catch (e) {}
+  }
+
+  const rawBlocks = text.split(/\n\n+/);
+  const blocos: ArtigoBloco[] = [];
+
+  for (const rawBlock of rawBlocks) {
+    const trimmed = rawBlock.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith("###") || trimmed.startsWith("##") || trimmed.startsWith("#")) {
+      blocos.push({
+        tipo: "subtitulo",
+        texto: trimmed.replace(/^#+\s*/, "").trim(),
+      });
+    } else if (trimmed.startsWith(">")) {
+      blocos.push({
+        tipo: "citacao",
+        texto: trimmed.replace(/^>\s*/, "").trim(),
+      });
+    } else if (
+      trimmed.split("\n").every((line) => line.trim().startsWith("- ") || line.trim().startsWith("* ") || /^\d+\.\s/.test(line.trim()))
+    ) {
+      const itens = trimmed
+        .split("\n")
+        .map((line) => line.replace(/^([-*]|\d+\.)\s*/, "").trim())
+        .filter(Boolean);
+      blocos.push({
+        tipo: "lista",
+        itens,
+      });
+    } else {
+      blocos.push({
+        tipo: "paragrafo",
+        texto: trimmed,
+      });
+    }
+  }
+
+  return blocos;
+}
+
 async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso: string } | null> {
   try {
     const dto = await api.conteudo(slug);
@@ -70,11 +121,7 @@ async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso
 
     let blocos: ArtigoBloco[] = [];
     if (dto.conteudo) {
-      try {
-        blocos = JSON.parse(dto.conteudo);
-      } catch (e) {
-        console.error("Erro ao fazer parse do conteudo", e);
-      }
+      blocos = parseMarkdownToBlocos(dto.conteudo);
     }
 
     const artigo: Artigo = {
