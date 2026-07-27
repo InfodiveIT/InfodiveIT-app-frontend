@@ -69,11 +69,5 @@
   "engines": {
     "node": ">=20.0.0",
     "npm": ">=10.0.0"
-  },
-  "eslintConfig": {
-    "extends": [
-      "next",
-      "plugin:storybook/recommended"
-    ]
   }
 }
