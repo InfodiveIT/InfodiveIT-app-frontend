@@ -39,6 +39,14 @@ const nextConfig = {
         protocol: 'https',
         hostname: '**.infodive.com.br',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+      },
     ],
   },
 }

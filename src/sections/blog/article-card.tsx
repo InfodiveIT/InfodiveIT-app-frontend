@@ -19,10 +19,10 @@ function getYouTubeThumbnail(url?: string): string | null {
  * /blog/[slug].
  */
 export function ArtigoCard({ artigo }: { artigo: Artigo }) {
-  const config = TIPO_CONFIG[artigo.tipo];
+  const config = (artigo.tipo && TIPO_CONFIG[artigo.tipo]) ? TIPO_CONFIG[artigo.tipo] : TIPO_CONFIG.artigo;
   const Icon = config.icon;
-  const ytThumb = artigo.tipo === "video" ? getYouTubeThumbnail(artigo.urlExterna) : null;
-  const bannerImage = artigo.imagemUrl || ytThumb;
+  const ytThumb = getYouTubeThumbnail(artigo.urlExterna);
+  const bannerImage = (artigo.imagemUrl && artigo.imagemUrl.trim()) ? artigo.imagemUrl : ytThumb;
 
   return (
     <Link

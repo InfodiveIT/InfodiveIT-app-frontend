@@ -15,6 +15,7 @@ import { ArtigoCard } from "@/sections/blog/article-card";
 import { BlogCta } from "@/sections/blog/cta";
 import { Footer } from "@/layout/footer";
 import { api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 interface PageProps {
   params: { slug: string };
@@ -536,12 +537,15 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
                       </div>
                     </div>
                     <div className="shrink-0 pt-2 sm:pt-0">
-                      <Link
-                        href={`/produtos/${artigo.produto.slug}`}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 font-semibold text-white shadow-lg shadow-brand/25 transition-all duration-200 hover:bg-brand-deep hover:shadow-brand/40 sm:w-auto text-sm"
-                      >
-                        <span>Ver produto</span>
-                        <ArrowLeft className="h-4 w-4 rotate-180" />
+                      <Link href={`/produtos/${artigo.produto.slug}`}>
+                        <Button
+                          variant="primary"
+                          size="md"
+                          className="w-full sm:w-auto font-semibold text-sm gap-2"
+                        >
+                          <span>Ver produto</span>
+                          <ArrowLeft className="h-4 w-4 rotate-180" />
+                        </Button>
                       </Link>
                     </div>
                   </div>

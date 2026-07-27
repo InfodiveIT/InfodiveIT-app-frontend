@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,6 +19,7 @@ import linkedinColorImg from "@/assets/footer/linkedin-colorfull.png";
 gsap.registerPlugin(ScrollTrigger);
 
 export function Footer() {
+  const pathname = usePathname();
   const containerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
 
@@ -82,11 +84,13 @@ export function Footer() {
   }, []);
 
   // Reveal por parallax — APENAS no desktop (lg+).
-  // No mobile o iOS bloqueia a animação atrelada ao scroll, e o footer ficava "travado"
-  // deslocado pra cima (yPercent), deixando uma faixa branca embaixo. Então no mobile
-  // o footer fica parado na posição natural (sem transform) — sem faixa, sem branco.
+  // Recalcula ScrollTrigger sempre que o pathname mudar (ex: ao ir para /sobre)
   useEffect(() => {
     if (!footerRef.current || !containerRef.current) return;
+
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 100);
 
     const mm = gsap.matchMedia();
     mm.add("(min-width: 1024px)", () => {
@@ -98,8 +102,8 @@ export function Footer() {
           ease: "none",
           scrollTrigger: {
             trigger: containerRef.current,
-            start: "top bottom", // quando o topo do container entra por baixo da viewport
-            end: "bottom bottom", // até a base do container chegar à base da tela (fim da página)
+            start: "top bottom",
+            end: "bottom bottom",
             scrub: true,
             invalidateOnRefresh: true,
           },
@@ -107,16 +111,16 @@ export function Footer() {
       );
     });
 
-    // Garante que ScrollTrigger recalcule a altura da página depois de carregar sliders/imagens
     const timeout = setTimeout(() => {
       ScrollTrigger.refresh();
-    }, 400);
+    }, 450);
 
     return () => {
       mm.revert();
+      clearTimeout(timer);
       clearTimeout(timeout);
     };
-  }, []);
+  }, [pathname]);
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -221,7 +225,7 @@ export function Footer() {
                   </li>
                   <li>
                     <Link
-                      href="/cases"
+                      href="/#cases"
                       className="hover:text-white hover:translate-x-1 transition-all duration-200 block"
                     >
                       Casos de Sucesso
@@ -237,7 +241,7 @@ export function Footer() {
                   </li>
                   <li>
                     <Link
-                      href="/contato"
+                      href="/#contact"
                       className="hover:text-white hover:translate-x-1 transition-all duration-200 block"
                     >
                       Fale Conosco
