@@ -30,6 +30,8 @@ export type Artigo = {
   descricao: string;
   data: string;
   imagemBg: string;
+  imagemUrl?: string;
+  urlExterna?: string;
   autor: string;
   tempoLeitura: string;
   conteudo: ArtigoBloco[];

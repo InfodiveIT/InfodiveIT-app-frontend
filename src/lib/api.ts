@@ -164,15 +164,14 @@ export type ConteudoDTO = {
   id: string
   titulo: string
   slug: string
-  tipo: 'ARTIGO' | 'WHITEPAPER' | 'CASE' | 'DATASHEET' | 'VIDEO' | 'POST_SOCIAL'
-  origem: 'INTERNO' | 'INSTAGRAM' | 'LINKEDIN'
+  tipo: 'ARTIGO' | 'WHITEPAPER' | 'CASE' | 'DATASHEET' | 'VIDEO'
+  origem?: string
   descricao?: string
   imagemUrl?: string
   autor?: string
   tempoLeitura?: string
   conteudo?: string
   urlExterna?: string
-  socialPostId?: string
   publicadoEm?: string
   ativo: boolean
   destaque: boolean

@@ -52,7 +52,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     if (conteudosPage && conteudosPage.content && conteudosPage.content.length > 0) {
       articleRoutes = conteudosPage.content
-        .filter((c) => c.tipo !== 'POST_SOCIAL')
         .map((a) => ({
           url: `${baseUrl}/blog/${a.slug}`,
           lastModified: new Date(),

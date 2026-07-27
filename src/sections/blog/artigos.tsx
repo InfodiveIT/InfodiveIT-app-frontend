@@ -53,7 +53,7 @@ export function BlogArtigos() {
     api.conteudos({ size: 50 })
       .then((page) => {
         const mapped = page.content
-          .filter((dto) => dto.tipo !== "POST_SOCIAL" && TIPO_MAP[dto.tipo])
+          .filter((dto) => TIPO_MAP[dto.tipo])
           .map(conteudoToArtigo);
         if (mapped.length > 0) {
           setArtigos(mapped);

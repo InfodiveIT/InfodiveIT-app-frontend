@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Clock, Play, User } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock, ExternalLink, Play, User } from "lucide-react";
 import {
   type ArtigoBloco,
   type Artigo,
@@ -26,6 +27,17 @@ const TIPO_MAP: Record<string, TipoConteudo> = {
   DATASHEET: "datasheet",
   VIDEO: "video",
 };
+
+function getYouTubeEmbedUrl(url?: string): string | null {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  if (match && match[2].length === 11) {
+    return `https://www.youtube-nocookie.com/embed/${match[2]}`;
+  }
+  if (url.includes('youtube.com/embed/')) return url;
+  return null;
+}
 
 async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso: string } | null> {
   try {
@@ -60,6 +72,8 @@ async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso
         ? new Date(dto.publicadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
         : "",
       imagemBg: "#0D1221",
+      imagemUrl: dto.imagemUrl,
+      urlExterna: dto.urlExterna,
       autor: dto.autor ?? "Equipe Infodive",
       tempoLeitura: dto.tempoLeitura ?? "",
       conteudo: blocos,
@@ -74,7 +88,7 @@ async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso
 async function getRelacionados(currentSlug: string, limit = 3): Promise<Artigo[]> {
   try {
     const page = await api.conteudos({ size: 10 });
-    const filtrados = page.content.filter((c) => c.slug !== currentSlug && c.tipo !== "POST_SOCIAL");
+    const filtrados = page.content.filter((c) => c.slug !== currentSlug);
 
     const [categorias, fabricantes] = await Promise.all([
       api.solucoes().catch(() => []),
@@ -95,6 +109,8 @@ async function getRelacionados(currentSlug: string, limit = 3): Promise<Artigo[]
           ? new Date(dto.publicadoEm).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
           : "",
         imagemBg: "#0D1221",
+        imagemUrl: dto.imagemUrl,
+        urlExterna: dto.urlExterna,
         autor: dto.autor ?? "Equipe Infodive",
         tempoLeitura: dto.tempoLeitura ?? "",
         conteudo: [],
@@ -112,7 +128,6 @@ export async function generateStaticParams() {
     const page = await api.conteudos({ size: 100 });
     if (page && page.content) {
       return page.content
-        .filter((c) => c.tipo !== "POST_SOCIAL")
         .map((c) => ({ slug: c.slug }));
     }
   } catch (e) {}
@@ -231,6 +246,8 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
     },
   };
 
+  const embedUrl = getYouTubeEmbedUrl(artigo.urlExterna);
+
   return (
     <>
       <script
@@ -325,22 +342,43 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
         <div className="bg-[#050507] pb-16">
           <div className="container-default">
             <Reveal className="mx-auto max-w-4xl">
-              <div
-                className="relative flex h-[220px] items-center justify-center overflow-hidden rounded-2xl border border-white/10 sm:h-[300px]"
-                style={{ backgroundColor: artigo.imagemBg }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent" />
-                <Icon
-                  className="h-24 w-24 text-white/[0.08]"
-                  strokeWidth={1}
-                  aria-hidden
-                />
-                {artigo.tipo === "video" && (
-                  <span className="absolute flex h-16 w-16 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 backdrop-blur-sm">
-                    <Play className="ml-1 h-7 w-7 fill-white text-white" aria-hidden />
-                  </span>
-                )}
-              </div>
+              {artigo.tipo === "video" && embedUrl ? (
+                <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
+                  <iframe
+                    src={embedUrl}
+                    title={artigo.titulo}
+                    className="absolute inset-0 h-full w-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              ) : artigo.imagemUrl ? (
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-white/10 bg-ink-950">
+                  <Image
+                    src={artigo.imagemUrl}
+                    alt={artigo.titulo}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div
+                  className="relative flex h-[220px] items-center justify-center overflow-hidden rounded-2xl border border-white/10 sm:h-[300px]"
+                  style={{ backgroundColor: artigo.imagemBg }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent" />
+                  <Icon
+                    className="h-24 w-24 text-white/[0.08]"
+                    strokeWidth={1}
+                    aria-hidden
+                  />
+                  {artigo.tipo === "video" && (
+                    <span className="absolute flex h-16 w-16 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20 backdrop-blur-sm">
+                      <Play className="ml-1 h-7 w-7 fill-white text-white" aria-hidden />
+                    </span>
+                  )}
+                </div>
+              )}
             </Reveal>
           </div>
         </div>
@@ -354,6 +392,27 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
                   <Bloco key={index} bloco={bloco} />
                 ))}
               </div>
+
+              {/* Bloco Saiba Mais se houver link externo para tipos não-vídeo */}
+              {artigo.tipo !== "video" && artigo.urlExterna && (
+                <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border border-brand/20 bg-brand/5 p-5 text-ink-950 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <ExternalLink className="h-5 w-5 shrink-0 text-brand" />
+                    <span className="text-sm font-medium text-ink-900">
+                      Saiba mais sobre esse conteúdo aqui:
+                    </span>
+                  </div>
+                  <a
+                    href={artigo.urlExterna}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-deep hover:underline break-all"
+                  >
+                    {artigo.urlExterna}
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                  </a>
+                </div>
+              )}
 
               {/* Rodapé do artigo */}
               <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-ink-200/70 pt-6">
