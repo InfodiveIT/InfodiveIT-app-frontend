@@ -223,7 +223,7 @@ export function SolutionDetailContent({
               <ConversionCTA
                 title="Comece a transformação da sua empresa"
                 subtitle="Agende uma reunião estratégica de 15 minutos com nossos arquitetos de TI para mapear a melhor arquitetura e SLA para sua operação."
-                ctaLabel="Falar com especialista"
+                ctaLabel="Falar com um especialista"
                 onCtaClick={() => setIsMenuOpen(true)}
               />
             </Reveal>

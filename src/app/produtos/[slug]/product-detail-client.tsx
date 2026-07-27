@@ -334,7 +334,7 @@ export function ProductDetailContent({
                     onClick={() => setIsMenuOpen(true)}
                     className="text-sm px-6 py-3.5 font-bold text-white cursor-pointer shadow-[0_4px_20px_rgba(14,102,255,0.25)]"
                   >
-                    Falar com especialista
+                    Falar com um especialista
                     <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                   </Button>
                 </div>
@@ -556,7 +556,7 @@ export function ProductDetailContent({
               <ConversionCTA
                 title="Comece a transformação da sua empresa"
                 subtitle={`Agende uma conversa com nossos especialistas e veja como o ${product.nome} se encaixa na sua estratégia de TI, com projeto, implantação e SLA garantidos.`}
-                ctaLabel="Falar com especialista"
+                ctaLabel="Falar com um especialista"
                 onCtaClick={() => setIsMenuOpen(true)}
               />
             </Reveal>
