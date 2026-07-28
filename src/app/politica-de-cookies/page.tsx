@@ -51,8 +51,8 @@ export default async function PoliticaDeCookiesPage() {
               <div className="mt-5 h-1.5 w-16 rounded-full bg-brand" />
             </Reveal>
 
-            {/* Dynamic Content */}
-            <Reveal delay={0.12} className="mt-12">
+            {/* Dynamic Content sem Reveal travando opacity */}
+            <div className="mt-12">
               <MarkdownRenderer content={politicaData?.conteudo} />
 
               {ultimaAtualizacao && (
@@ -60,7 +60,7 @@ export default async function PoliticaDeCookiesPage() {
                   Última atualização: {ultimaAtualizacao}.
                 </div>
               )}
-            </Reveal>
+            </div>
           </div>
         </div>
       </main>

@@ -37,7 +37,7 @@ export function Reveal({
   delay = 0,
   blur = 8,
   y = 14,
-  amount = 0.3,
+  amount = 0.05,
   className,
   children,
 }: RevealProps) {

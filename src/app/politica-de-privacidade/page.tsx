@@ -50,7 +50,8 @@ export default async function PoliticaPrivacidadePage() {
               <div className="mt-5 h-1.5 w-16 rounded-full bg-brand" />
             </Reveal>
 
-            <Reveal delay={0.12} className="mt-12">
+            {/* Conteúdo Dinâmico sem Reveal travando opacity */}
+            <div className="mt-12">
               <MarkdownRenderer content={politicaData?.conteudo} />
 
               {ultimaAtualizacao && (
@@ -58,7 +59,7 @@ export default async function PoliticaPrivacidadePage() {
                   Última atualização: {ultimaAtualizacao}.
                 </div>
               )}
-            </Reveal>
+            </div>
           </div>
         </div>
       </main>
