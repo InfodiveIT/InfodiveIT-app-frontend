@@ -28,7 +28,7 @@ export default async function TermosDeUsoPage() {
 
   const titulo = politicaData?.titulo || "Termos de Uso";
   const subtitulo = politicaData?.subtitulo || "Termos e Condições";
-  const ultimaAtualizacao = politicaData?.ultimaAtualizacao || "16 de Junho de 2026";
+  const ultimaAtualizacao = politicaData?.ultimaAtualizacao || "";
 
   return (
     <>
@@ -51,33 +51,13 @@ export default async function TermosDeUsoPage() {
             </Reveal>
 
             <Reveal delay={0.12} className="mt-12">
-              {politicaData?.conteudo ? (
-                <MarkdownRenderer content={politicaData.conteudo} />
-              ) : (
-                <div className="max-w-none text-[16px] md:text-[17px] leading-relaxed text-ink-900">
-                  <p className="mt-6 text-pretty leading-relaxed text-ink-900">
-                    Bem-vindo ao portal da <strong>Infodive IT</strong>. Ao acessar e utilizar este website, você concorda em cumprir e estar vinculado aos seguintes termos e condições de uso. Se você não concordar com qualquer parte destes termos, por favor, não utilize nosso site.
-                  </p>
+              <MarkdownRenderer content={politicaData?.conteudo} />
 
-                  <h2 className="mt-12 text-2xl font-semibold tracking-tight text-ink-950">
-                    1. Aceitação dos Termos
-                  </h2>
-                  <p className="mt-6 text-pretty leading-relaxed text-ink-900">
-                    Os presentes Termos de Uso regulam o acesso e a utilização dos serviços e informações disponibilizados no site da Infodive IT. O uso continuado deste site confirma sua aceitação tácita e integral destes termos.
-                  </p>
-
-                  <h2 className="mt-12 text-2xl font-semibold tracking-tight text-ink-950">
-                    2. Propriedade Intelectual
-                  </h2>
-                  <p className="mt-6 text-pretty leading-relaxed text-ink-900">
-                    Todo o conteúdo deste site é propriedade da Infodive IT ou de seus fornecedores de conteúdo e parceiros de tecnologia, sendo protegido pelas leis de direitos autorais.
-                  </p>
+              {ultimaAtualizacao && (
+                <div className="mt-14 border-t border-ink-200/70 pt-6 text-sm text-ink-500">
+                  Última atualização: {ultimaAtualizacao}.
                 </div>
               )}
-
-              <div className="mt-14 border-t border-ink-200/70 pt-6 text-sm text-ink-500">
-                Última atualização: {ultimaAtualizacao}.
-              </div>
             </Reveal>
           </div>
         </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -36,24 +38,23 @@ export function MarkdownRenderer({ content, className = "" }: MarkdownRendererPr
             </h4>
           ),
           p: ({ children }) => (
-            <p className="mt-6 text-pretty leading-relaxed text-ink-900">
+            <p className="mt-4 mb-4 text-pretty leading-relaxed text-ink-900">
               {children}
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="my-6 space-y-3 pl-1">
+            <ul className="my-6 space-y-2.5 pl-5 list-disc marker:text-brand">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="my-6 space-y-3 list-decimal list-inside text-ink-900 font-medium pl-1">
+            <ol className="my-6 space-y-2.5 pl-5 list-decimal marker:font-semibold marker:text-ink-950">
               {children}
             </ol>
           ),
           li: ({ children }) => (
-            <li className="flex items-start gap-3 text-ink-900 leading-relaxed">
-              <span className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand" aria-hidden />
-              <div className="flex-1">{children}</div>
+            <li className="text-ink-900 leading-relaxed pl-1">
+              {children}
             </li>
           ),
           blockquote: ({ children }) => (

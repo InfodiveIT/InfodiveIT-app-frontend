@@ -28,7 +28,7 @@ export default async function PoliticaPrivacidadePage() {
 
   const titulo = politicaData?.titulo || "Política de Privacidade";
   const subtitulo = politicaData?.subtitulo || "Termos e Condições";
-  const ultimaAtualizacao = politicaData?.ultimaAtualizacao || "16 de Junho de 2026";
+  const ultimaAtualizacao = politicaData?.ultimaAtualizacao || "";
 
   return (
     <>
@@ -51,50 +51,13 @@ export default async function PoliticaPrivacidadePage() {
             </Reveal>
 
             <Reveal delay={0.12} className="mt-12">
-              {politicaData?.conteudo ? (
-                <MarkdownRenderer content={politicaData.conteudo} />
-              ) : (
-                <div className="max-w-none text-[16px] md:text-[17px] leading-relaxed text-ink-900">
-                  <p className="mt-6 text-pretty leading-relaxed text-ink-900">
-                    Na <strong>Infodive IT</strong>, privacidade e segurança são prioridades e nos comprometemos com a transparência do tratamento de dados pessoais dos nossos usuários e clientes. Por isso, a presente Política de Privacidade estabelece como é feita a coleta, uso e transferência de informações de clientes ou outras pessoas que acessam ou usam nosso site.
-                  </p>
+              <MarkdownRenderer content={politicaData?.conteudo} />
 
-                  <h2 className="mt-12 text-2xl font-semibold tracking-tight text-ink-950">
-                    1. Quais dados coletamos e com qual finalidade?
-                  </h2>
-                  <p className="mt-6 text-pretty leading-relaxed text-ink-900">
-                    Nosso site coleta e utiliza alguns dados pessoais seus de forma a viabilizar a prestação de serviços e aprimorar a experiência de uso.
-                  </p>
-                  <ul className="mt-6 space-y-3">
-                    <li className="flex gap-3 text-ink-900">
-                      <span className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand" aria-hidden />
-                      <span className="leading-relaxed"><strong>Dados de contato:</strong> Nome, e-mail, telefone e empresa fornecidos voluntariamente através de formulários de contato para atendimento técnico ou comercial.</span>
-                    </li>
-                    <li className="flex gap-3 text-ink-900">
-                      <span className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand" aria-hidden />
-                      <span className="leading-relaxed"><strong>Dados de navegação:</strong> Cookies e endereço IP coletados de forma automatizada para análise de performance e segurança do site.</span>
-                    </li>
-                  </ul>
-
-                  <h2 className="mt-12 text-2xl font-semibold tracking-tight text-ink-950">
-                    2. Consentimento e Bases Legais
-                  </h2>
-                  <p className="mt-6 text-pretty leading-relaxed text-ink-900">
-                    É a partir do seu consentimento ou de outras bases legais previstas na Lei Geral de Proteção de Dados (LGPD) que tratamos os seus dados pessoais.
-                  </p>
-
-                  <h2 className="mt-12 text-2xl font-semibold tracking-tight text-ink-950">
-                    3. Direitos dos Titulares de Dados
-                  </h2>
-                  <p className="mt-6 text-pretty leading-relaxed text-ink-900">
-                    A Infodive IT assegura a seus usuários seus direitos de titular previstos no artigo 18 da Lei Geral de Proteção de Dados.
-                  </p>
+              {ultimaAtualizacao && (
+                <div className="mt-14 border-t border-ink-200/70 pt-6 text-sm text-ink-500">
+                  Última atualização: {ultimaAtualizacao}.
                 </div>
               )}
-
-              <div className="mt-14 border-t border-ink-200/70 pt-6 text-sm text-ink-500">
-                Última atualização: {ultimaAtualizacao}.
-              </div>
             </Reveal>
           </div>
         </div>
