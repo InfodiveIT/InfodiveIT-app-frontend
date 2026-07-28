@@ -16,6 +16,7 @@ import { BlogCta } from "@/sections/blog/cta";
 import { Footer } from "@/layout/footer";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 interface PageProps {
   params: { slug: string };
@@ -91,7 +92,7 @@ function parseMarkdownToBlocos(text?: string): ArtigoBloco[] {
   return blocos;
 }
 
-async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso: string } | null> {
+async function getArtigo(slug: string): Promise<{ artigo: Artigo; rawConteudo?: string; publicadoEmIso: string } | null> {
   try {
     const dto = await api.conteudo(slug);
     if (!dto || !dto.ativo) return null;
@@ -152,7 +153,7 @@ async function getArtigo(slug: string): Promise<{ artigo: Artigo; publicadoEmIso
       } : undefined,
     };
 
-    return { artigo, publicadoEmIso: dto.publicadoEm || new Date().toISOString() };
+    return { artigo, rawConteudo: dto.conteudo, publicadoEmIso: dto.publicadoEm || new Date().toISOString() };
   } catch (e) {
     return null;
   }
@@ -490,11 +491,7 @@ export default async function ArtigoDetailPage({ params }: PageProps) {
         <article className="bg-white py-16 md:py-20">
           <div className="container-default">
             <Reveal className="mx-auto max-w-3xl text-[17px]">
-              <div>
-                {artigo.conteudo.map((bloco, index) => (
-                  <Bloco key={index} bloco={bloco} />
-                ))}
-              </div>
+              <MarkdownRenderer content={result.rawConteudo || ""} />
 
               {/* Card de Produto Relacionado */}
               {artigo.produto && (
