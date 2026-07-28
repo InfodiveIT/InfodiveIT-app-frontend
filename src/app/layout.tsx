@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { IBM_Plex_Sans } from 'next/font/google'
 import { Navbar } from '@/layout/navbar'
 import { ScrollToTop } from '@/components/scroll-to-top'
+import { CookieBanner } from '@/components/cookie-banner'
 import dynamic from 'next/dynamic'
 import '@/styles/globals.css'
 
@@ -69,6 +70,7 @@ export default function RootLayout({
         </a>
         <SmoothScroll />
         <ScrollToTop />
+        <CookieBanner />
         <Navbar />
         {children}
       </body>

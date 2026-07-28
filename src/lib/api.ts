@@ -263,6 +263,18 @@ export type FaqDTO = {
   ordem: number
 }
 
+export type PoliticaDTO = {
+  id: string
+  slug: string
+  titulo: string
+  subtitulo?: string
+  conteudo: string
+  ultimaAtualizacao?: string
+  ativo: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
 export type SecaoHomeDTO = {
   secao: string
   eyebrow?: string
@@ -526,6 +538,12 @@ export const api = {
 
   contatoInfo: () =>
     fetchAPI<ContatoInfoDTO>('/contato-info', { tags: ['contato-info'] }),
+
+  politicas: () =>
+    fetchAPI<PoliticaDTO[]>('/politicas', { tags: ['politicas'] }),
+
+  politica: (slug: string) =>
+    fetchAPI<PoliticaDTO>(`/politicas/${encodeURIComponent(slug)}`, { tags: ['politica'] }),
 
   secaoHome: (secao: string) =>
     fetchAPI<SecaoHomeDTO>(`/secoes-home/${encodeURIComponent(secao)}`, { tags: ['secoes-home'] }),

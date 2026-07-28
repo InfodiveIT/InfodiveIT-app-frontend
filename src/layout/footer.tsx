@@ -272,6 +272,13 @@ export function Footer() {
               >
                 Termos de Uso
               </Link>
+              <span className="hidden md:inline text-white/10">|</span>
+              <Link
+                href="/politica-de-cookies"
+                className="hover:text-white transition-colors duration-200"
+              >
+                Política de Cookies
+              </Link>
             </div>
 
             {/* Social Media links */}
