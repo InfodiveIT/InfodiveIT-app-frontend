@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Footer } from "@/layout/footer";
 import { Reveal } from "@/components/animations/reveal";
 import { api } from "@/lib/api";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 export const metadata: Metadata = {
   title: "Política de Privacidade | Infodive IT",
@@ -51,9 +52,7 @@ export default async function PoliticaPrivacidadePage() {
 
             <Reveal delay={0.12} className="mt-12">
               {politicaData?.conteudo ? (
-                <div className="max-w-none text-[16px] md:text-[17px] leading-relaxed text-ink-900 whitespace-pre-line">
-                  {politicaData.conteudo}
-                </div>
+                <MarkdownRenderer content={politicaData.conteudo} />
               ) : (
                 <div className="max-w-none text-[16px] md:text-[17px] leading-relaxed text-ink-900">
                   <p className="mt-6 text-pretty leading-relaxed text-ink-900">
