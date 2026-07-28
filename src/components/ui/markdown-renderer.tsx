@@ -1,165 +1,110 @@
 import React from "react";
 
-interface MarkdownRendererProps {
-  content: string;
-  className?: string;
+export type ArtigoBloco =
+  | { tipo: "subtitulo"; texto: string }
+  | { tipo: "citacao"; texto: string }
+  | { tipo: "lista"; itens: string[] }
+  | { tipo: "paragrafo"; texto: string };
+
+/** Converte texto Markdown em estrutura de blocos exatamente igual à página do Blog */
+export function parseMarkdownToBlocos(text?: string): ArtigoBloco[] {
+  if (!text || !text.trim()) return [];
+
+  if (text.trim().startsWith("[")) {
+    try {
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.tipo) {
+        return parsed;
+      }
+    } catch (e) {}
+  }
+
+  const rawBlocks = text.split(/\n\n+/);
+  const blocos: ArtigoBloco[] = [];
+
+  for (const rawBlock of rawBlocks) {
+    const trimmed = rawBlock.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith("###") || trimmed.startsWith("##") || trimmed.startsWith("#")) {
+      blocos.push({
+        tipo: "subtitulo",
+        texto: trimmed.replace(/^#+\s*/, "").trim(),
+      });
+    } else if (trimmed.startsWith(">")) {
+      blocos.push({
+        tipo: "citacao",
+        texto: trimmed.replace(/^>\s*/, "").trim(),
+      });
+    } else if (
+      trimmed.split("\n").every((line) => line.trim().startsWith("- ") || line.trim().startsWith("* ") || /^\d+\.\s/.test(line.trim()))
+    ) {
+      const itens = trimmed
+        .split("\n")
+        .map((line) => line.replace(/^([-*]|\d+\.)\s*/, "").trim())
+        .filter(Boolean);
+      blocos.push({
+        tipo: "lista",
+        itens,
+      });
+    } else {
+      blocos.push({
+        tipo: "paragrafo",
+        texto: trimmed,
+      });
+    }
+  }
+
+  return blocos;
 }
 
-/** Processa sintaxe markdown inline: **negrito**, *itálico*, [link](url) */
-function parseInline(text: string): React.ReactNode[] {
-  if (!text) return [];
-
-  // Regex para capturar **negrito**, *itálico* e [link](url)
-  const regex = /(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/g;
-  const parts = text.split(regex);
-
-  return parts.map((part, index) => {
-    if (!part) return null;
-
-    // Negrito **texto**
-    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+/** Renderiza um único bloco igualzinho ao Bloco do Blog */
+export function Bloco({ bloco }: { bloco: ArtigoBloco }) {
+  switch (bloco.tipo) {
+    case "subtitulo":
       return (
-        <strong key={index} className="font-bold text-ink-950">
-          {part.slice(2, -2)}
-        </strong>
+        <h2 className="mt-12 text-2xl font-semibold tracking-tight text-ink-950">
+          {bloco.texto}
+        </h2>
       );
-    }
-
-    // Itálico *texto*
-    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
-      return <em key={index}>{part.slice(1, -1)}</em>;
-    }
-
-    // Link [texto](url)
-    const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (linkMatch) {
+    case "lista":
       return (
-        <a
-          key={index}
-          href={linkMatch[2]}
-          target={linkMatch[2].startsWith("http") ? "_blank" : "_self"}
-          rel="noopener noreferrer"
-          className="font-medium text-brand hover:underline underline-offset-2 transition-colors"
-        >
-          {linkMatch[1]}
-        </a>
+        <ul className="mt-6 space-y-3">
+          {bloco.itens.map((item, idx) => (
+            <li key={idx} className="flex gap-3 text-ink-900">
+              <span
+                className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand"
+                aria-hidden
+              />
+              <span className="leading-relaxed">{item}</span>
+            </li>
+          ))}
+        </ul>
       );
-    }
-
-    return part;
-  });
+    case "citacao":
+      return (
+        <blockquote className="my-10 border-l-2 border-brand pl-6 text-xl font-medium leading-relaxed text-ink-950">
+          {bloco.texto}
+        </blockquote>
+      );
+    default:
+      return (
+        <p className="mt-6 text-pretty leading-relaxed text-ink-900">
+          {bloco.texto}
+        </p>
+      );
+  }
 }
 
-export function MarkdownRenderer({ content, className = "" }: MarkdownRendererProps) {
-  if (!content) return null;
-
-  // Separa o texto em blocos por linhas em branco
-  const blocks = content.split(/\n\s*\n/);
+export function MarkdownRenderer({ content, className = "" }: { content?: string; className?: string }) {
+  const blocos = parseMarkdownToBlocos(content);
+  if (!blocos.length) return null;
 
   return (
     <div className={`max-w-none text-[16px] md:text-[17px] leading-relaxed text-ink-900 ${className}`}>
-      {blocks.map((block, blockIdx) => {
-        const trimmed = block.trim();
-        if (!trimmed) return null;
-
-        // Título H1
-        if (trimmed.startsWith("# ")) {
-          return (
-            <h1 key={blockIdx} className="mt-10 mb-4 text-3xl font-extrabold tracking-tight text-ink-950">
-              {parseInline(trimmed.replace(/^#\s+/, ""))}
-            </h1>
-          );
-        }
-
-        // Título H2
-        if (trimmed.startsWith("## ")) {
-          return (
-            <h2 key={blockIdx} className="mt-10 mb-4 text-2xl font-bold tracking-tight text-ink-950 border-b border-ink-200/60 pb-2">
-              {parseInline(trimmed.replace(/^##\s+/, ""))}
-            </h2>
-          );
-        }
-
-        // Título H3
-        if (trimmed.startsWith("### ")) {
-          return (
-            <h3 key={blockIdx} className="mt-8 mb-3 text-xl font-semibold tracking-tight text-ink-950">
-              {parseInline(trimmed.replace(/^###\s+/, ""))}
-            </h3>
-          );
-        }
-
-        // Título H4
-        if (trimmed.startsWith("#### ")) {
-          return (
-            <h4 key={blockIdx} className="mt-6 mb-2 text-lg font-semibold text-ink-950">
-              {parseInline(trimmed.replace(/^####\s+/, ""))}
-            </h4>
-          );
-        }
-
-        // Citação (Blockquote)
-        if (trimmed.startsWith("> ")) {
-          return (
-            <blockquote key={blockIdx} className="my-6 border-l-4 border-brand bg-brand/5 p-4 rounded-r-lg text-ink-950 italic">
-              {parseInline(trimmed.replace(/^>\s+/, ""))}
-            </blockquote>
-          );
-        }
-
-        // Divisor (Horizontal Rule)
-        if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
-          return <hr key={blockIdx} className="my-8 border-t border-ink-200/70" />;
-        }
-
-        // Lista não-ordenada (- item ou * item)
-        const lines = trimmed.split("\n");
-        const isUnorderedList = lines.every((l) => l.trim().startsWith("- ") || l.trim().startsWith("* "));
-        if (isUnorderedList) {
-          return (
-            <ul key={blockIdx} className="my-5 space-y-2.5">
-              {lines.map((line, lineIdx) => {
-                const itemText = line.trim().replace(/^[-*]\s+/, "");
-                return (
-                  <li key={lineIdx} className="flex items-start gap-3 text-ink-900">
-                    <span className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand" aria-hidden />
-                    <span className="leading-relaxed">{parseInline(itemText)}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          );
-        }
-
-        // Lista ordenada (1. item)
-        const isOrderedList = lines.every((l) => /^\d+\.\s+/.test(l.trim()));
-        if (isOrderedList) {
-          return (
-            <ol key={blockIdx} className="my-5 space-y-2.5 list-decimal list-inside text-ink-900">
-              {lines.map((line, lineIdx) => {
-                const itemText = line.trim().replace(/^\d+\.\s+/, "");
-                return (
-                  <li key={lineIdx} className="leading-relaxed pl-1">
-                    {parseInline(itemText)}
-                  </li>
-                );
-              })}
-            </ol>
-          );
-        }
-
-        // Parágrafo padrão
-        return (
-          <p key={blockIdx} className="mt-5 text-pretty leading-relaxed text-ink-900">
-            {lines.map((line, lineIdx) => (
-              <React.Fragment key={lineIdx}>
-                {parseInline(line)}
-                {lineIdx < lines.length - 1 && <br />}
-              </React.Fragment>
-            ))}
-          </p>
-        );
-      })}
+      {blocos.map((bloco, index) => (
+        <Bloco key={index} bloco={bloco} />
+      ))}
     </div>
   );
 }
