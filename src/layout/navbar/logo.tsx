@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import logoImg from "@/assets/logo/Logo infodive.webp";
+import logoImg from "@/assets/logo/Logo Infodive 3.png";
 import faviconImg from "@/assets/logo/Logos Infodive Navbar.png";
 import { cn } from "@/lib/utils";
 
