@@ -4,6 +4,9 @@ import CasesCarousel from "@/components/cases-carousel"
 import { Reveal } from "@/components/animations/reveal"
 
 export function Cases() {
+  // Temporariamente oculto até que os cases sejam populados
+  return null;
+
   return (
     <section
       id="cases"
