@@ -633,6 +633,12 @@ export function GsapMenu({
           <div className="nav-middle-actions mt-3">
             <a 
               href={`mailto:${EMAIL_ADRESS}`} 
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.location.href = `mailto:${EMAIL_ADRESS}`;
+              }}
               className="nav-action-btn text-xs font-semibold"
             >
               Falar com o Suporte
