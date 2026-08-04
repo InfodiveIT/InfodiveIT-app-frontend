@@ -338,7 +338,7 @@ export function BlogSocial() {
 
         {/* Badge Informativa */}
         <p className="mt-12 text-center text-xs text-ink-500">
-          ⚡ Publicações mais populares atualizadas automaticamente das contas oficiais da Infodive IT.
+          Siga nossas contas oficiais no Instagram e LinkedIn para acompanhar nossas publicações.
         </p>
       </div>
     </section>
