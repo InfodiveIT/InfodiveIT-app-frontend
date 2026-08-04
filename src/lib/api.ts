@@ -237,6 +237,23 @@ export type ConfigBlogDTO = {
   socialDescricao?: string
   urlInstagram?: string
   urlLinkedin?: string
+  instagramAccessToken?: string
+  instagramAccountId?: string
+  linkedinAccessToken?: string
+  linkedinOrganizationId?: string
+}
+
+export type SocialPostDTO = {
+  id: string
+  rede: 'INSTAGRAM' | 'LINKEDIN'
+  externalId: string
+  textoLegenda?: string
+  imagemUrl?: string
+  permalinkUrl?: string
+  likesCount?: number
+  commentsCount?: number
+  publicadoEm?: string
+  ativo: boolean
 }
 
 export type ContatoInfoDTO = {
@@ -535,6 +552,9 @@ export const api = {
 
   configBlog: () =>
     fetchAPI<ConfigBlogDTO>('/config-blog', { tags: ['config-blog'] }),
+
+  socialPosts: (rede?: 'INSTAGRAM' | 'LINKEDIN') =>
+    fetchAPI<SocialPostDTO[]>(`/social-posts${buildQuery({ rede })}`, { tags: ['social-posts'] }),
 
   contatoInfo: () =>
     fetchAPI<ContatoInfoDTO>('/contato-info', { tags: ['contato-info'] }),

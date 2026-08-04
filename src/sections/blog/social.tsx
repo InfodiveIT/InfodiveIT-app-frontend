@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api, SocialPostDTO } from "@/lib/api";
 import Image from "next/image";
 import {
   ArrowUpRight,
@@ -17,8 +17,10 @@ import linkedinImg from "@/assets/footer/linkedin.png";
 import { Reveal } from "@/components/animations/reveal";
 import { cn } from "@/lib/utils";
 
-type InstagramPost = {
-  imagemBg: string;
+type InstagramPostDisplay = {
+  imagemBg?: string;
+  imagemUrl?: string;
+  permalinkUrl?: string;
   altura: string;
   likes: number;
   comentarios: number;
@@ -26,16 +28,18 @@ type InstagramPost = {
   tempo: string;
 };
 
-type LinkedinPost = {
+type LinkedinPostDisplay = {
   texto: string;
   temImagem: boolean;
-  imagemBg: string;
+  imagemBg?: string;
+  imagemUrl?: string;
+  permalinkUrl?: string;
   likes: number;
   comentarios: number;
   tempo: string;
 };
 
-const instagramPosts: InstagramPost[] = [
+const fallbackInstagramPosts: InstagramPostDisplay[] = [
   {
     imagemBg: "#0A0F1A",
     altura: "280px",
@@ -92,7 +96,7 @@ const instagramPosts: InstagramPost[] = [
   },
 ];
 
-const linkedinPosts: LinkedinPost[] = [
+const fallbackLinkedinPosts: LinkedinPostDisplay[] = [
   {
     texto:
       "Acabamos de concluir mais um projeto de modernização de datacenter. O cliente tinha servidores legados com mais de 8 anos operando aplicações críticas. Em 90 dias, sem nenhuma interrupção do serviço, migramos tudo para uma nova infraestrutura Lenovo ThinkSystem.\n\nO resultado: 40% de redução no consumo energético, 3x mais capacidade de processamento e SLA de 99.98%.\n\nÉ por projetos assim que acordamos todo dia. 🚀",
@@ -133,6 +137,26 @@ const linkedinPosts: LinkedinPost[] = [
 
 type Rede = "instagram" | "linkedin";
 
+function formatTempoRelativo(dataIso?: string): string {
+  if (!dataIso) return "Recente";
+  try {
+    const diffMs = Date.now() - new Date(dataIso).getTime();
+    if (isNaN(diffMs)) return "Recente";
+    const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHoras < 1) return "Poucos minutos atrás";
+    if (diffHoras < 24) return `${diffHoras} horas atrás`;
+    const diffDias = Math.floor(diffHoras / 24);
+    if (diffDias === 1) return "Ontem";
+    if (diffDias < 7) return `${diffDias} dias atrás`;
+    const diffSemanas = Math.floor(diffDias / 7);
+    if (diffSemanas < 4) return `${diffSemanas} semana${diffSemanas > 1 ? "s" : ""} atrás`;
+    const diffMeses = Math.floor(diffDias / 30);
+    return `${diffMeses} mês${diffMeses > 1 ? "es" : ""} atrás`;
+  } catch {
+    return "Recente";
+  }
+}
+
 export function BlogSocial() {
   const [rede, setRede] = useState<Rede>("instagram");
   const [instagramUrl, setInstagramUrl] = useState("https://www.instagram.com/infodiveit/");
@@ -140,6 +164,10 @@ export function BlogSocial() {
   const [socialEyebrow, setSocialEyebrow] = useState("Nas redes sociais");
   const [socialHeadline, setSocialHeadline] = useState("Acompanhe a Infodive no Instagram e LinkedIn.");
   const [socialDescricao, setSocialDescricao] = useState("Conteúdo técnico, novidades e bastidores da equipe.");
+
+  const [instagramPosts, setInstagramPosts] = useState<InstagramPostDisplay[]>(fallbackInstagramPosts);
+  const [linkedinPosts, setLinkedinPosts] = useState<LinkedinPostDisplay[]>(fallbackLinkedinPosts);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.configBlog()
@@ -150,7 +178,43 @@ export function BlogSocial() {
         if (data.socialHeadline) setSocialHeadline(data.socialHeadline);
         if (data.socialDescricao) setSocialDescricao(data.socialDescricao);
       })
-      .catch(() => { /* mantém fallback */ });
+      .catch(() => {});
+
+    Promise.all([
+      api.socialPosts("INSTAGRAM").catch(() => []),
+      api.socialPosts("LINKEDIN").catch(() => []),
+    ]).then(([igData, liData]) => {
+      if (igData && igData.length > 0) {
+        const alturas = ["280px", "240px", "310px", "260px", "290px", "250px"];
+        setInstagramPosts(
+          igData.map((item, idx) => ({
+            imagemUrl: item.imagemUrl,
+            permalinkUrl: item.permalinkUrl,
+            altura: alturas[idx % alturas.length],
+            likes: item.likesCount ?? 0,
+            comentarios: item.commentsCount ?? 0,
+            legenda: item.textoLegenda || "",
+            tempo: formatTempoRelativo(item.publicadoEm),
+          }))
+        );
+      }
+
+      if (liData && liData.length > 0) {
+        setLinkedinPosts(
+          liData.map((item) => ({
+            texto: item.textoLegenda || "",
+            temImagem: Boolean(item.imagemUrl && item.imagemUrl.length > 0),
+            imagemUrl: item.imagemUrl,
+            permalinkUrl: item.permalinkUrl,
+            likes: item.likesCount ?? 0,
+            comentarios: item.commentsCount ?? 0,
+            tempo: formatTempoRelativo(item.publicadoEm),
+          }))
+        );
+      }
+    }).finally(() => {
+      setLoading(false);
+    });
   }, []);
 
   return (
@@ -238,13 +302,16 @@ export function BlogSocial() {
 
         {/* Feed */}
         <div className="mt-10">
-          {rede === "instagram" ? <InstagramFeed /> : <LinkedinFeed />}
+          {rede === "instagram" ? (
+            <InstagramFeed posts={instagramPosts} instagramUrl={instagramUrl} />
+          ) : (
+            <LinkedinFeed posts={linkedinPosts} linkedinUrl={linkedinUrl} />
+          )}
         </div>
 
-        {/* Aviso de integração futura */}
-        <p className="mt-12 text-center text-xs italic text-ink-500">
-          Em breve este feed será atualizado automaticamente direto das redes
-          sociais.
+        {/* Badge Informativa */}
+        <p className="mt-12 text-center text-xs text-ink-500">
+          ⚡ Publicações atualizadas automaticamente das contas oficiais da Infodive IT.
         </p>
       </div>
     </section>
@@ -252,7 +319,7 @@ export function BlogSocial() {
 }
 
 /** Mini header de perfil reutilizado no topo de cada card do Instagram. */
-function ProfileHeader() {
+function ProfileHeader({ permalinkUrl, instagramUrl }: { permalinkUrl?: string; instagramUrl: string }) {
   return (
     <div className="flex items-center gap-2.5 px-4 py-3">
       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10 ring-1 ring-white/10">
@@ -263,41 +330,58 @@ function ProfileHeader() {
         />
       </span>
       <span className="text-sm font-semibold text-white">infodive_it</span>
-      <Image
-        src={instagramImg}
-        alt=""
-        aria-hidden
-        className="ml-auto h-4 w-4 object-contain opacity-70"
-      />
+      <a
+        href={permalinkUrl || instagramUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ml-auto"
+      >
+        <Image
+          src={instagramImg}
+          alt="Instagram Post"
+          className="h-4 w-4 object-contain opacity-70 hover:opacity-100 transition-opacity"
+        />
+      </a>
     </div>
   );
 }
 
 /** Feed do Instagram — mosaico/masonry de 3 colunas com alturas variáveis. */
-function InstagramFeed() {
+function InstagramFeed({ posts, instagramUrl }: { posts: InstagramPostDisplay[]; instagramUrl: string }) {
   return (
     <div className="gap-6 sm:columns-2 lg:columns-3 [&>*]:mb-6">
-      {instagramPosts.map((post, index) => (
+      {posts.map((post, index) => (
         <Reveal
-          key={post.legenda}
+          key={post.permalinkUrl || post.legenda.slice(0, 32) + index}
           delay={(index % 3) * 0.08}
           className="break-inside-avoid"
         >
           <article className="group overflow-hidden rounded-xl border border-[#1E1E22] bg-[#0D0D0F] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2A2A30]">
-            <ProfileHeader />
+            <ProfileHeader permalinkUrl={post.permalinkUrl} instagramUrl={instagramUrl} />
 
-            {/* Imagem — altura variável (mosaico) */}
+            {/* Imagem */}
             <div
-              className="relative w-full overflow-hidden"
-              style={{ height: post.altura, backgroundColor: post.imagemBg }}
+              className="relative w-full overflow-hidden bg-[#0A0F1A]"
+              style={{ height: post.altura, backgroundColor: post.imagemBg || "#0A0F1A" }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent" />
-              <Image
-                src={faviconImg}
-                alt=""
-                aria-hidden
-                className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.07]"
-              />
+              {post.imagemUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={post.imagemUrl}
+                  alt={post.legenda ? post.legenda.slice(0, 50) : "Instagram Post"}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent" />
+                  <Image
+                    src={faviconImg}
+                    alt=""
+                    aria-hidden
+                    className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.07]"
+                  />
+                </>
+              )}
             </div>
 
             {/* Interações */}
@@ -310,23 +394,37 @@ function InstagramFeed() {
                 <MessageCircle className="h-4 w-4" aria-hidden />
                 {post.comentarios}
               </span>
-              <Send className="ml-auto h-4 w-4" aria-hidden />
+              {post.permalinkUrl && (
+                <a
+                  href={post.permalinkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto"
+                >
+                  <Send className="h-4 w-4 transition-colors hover:text-white" aria-hidden />
+                </a>
+              )}
             </div>
 
             <div className="mx-4 mt-3 border-t border-white/[0.06]" />
 
             {/* Legenda */}
             <div className="px-4 py-3">
-              <p className="line-clamp-2 text-[13px] leading-[1.6] text-ink-300">
+              <p className="line-clamp-3 text-[13px] leading-[1.6] text-ink-300">
                 <span className="font-semibold text-white">infodive_it</span>{" "}
                 {post.legenda}
               </p>
-              <button
-                type="button"
-                className="mt-1 text-xs font-medium text-brand transition-colors hover:text-brand-light"
-              >
-                Ver mais...
-              </button>
+              {post.permalinkUrl && (
+                <a
+                  href={post.permalinkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-brand transition-colors hover:text-brand-light"
+                >
+                  Ver no Instagram
+                  <ArrowUpRight className="h-3 w-3" />
+                </a>
+              )}
             </div>
 
             <div className="mx-4 border-t border-white/[0.06]" />
@@ -343,12 +441,12 @@ function InstagramFeed() {
 }
 
 /** Feed do LinkedIn — posts longos estilo feed profissional, 2 colunas. */
-function LinkedinFeed() {
+function LinkedinFeed({ posts, linkedinUrl }: { posts: LinkedinPostDisplay[]; linkedinUrl: string }) {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      {linkedinPosts.map((post, index) => (
+      {posts.map((post, index) => (
         <Reveal
-          key={post.texto.slice(0, 32)}
+          key={post.permalinkUrl || post.texto.slice(0, 32) + index}
           as="article"
           delay={(index % 2) * 0.08}
           className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#1E1E22] bg-[#0D0D0F] transition-colors duration-300 hover:border-[#2A2A30]"
@@ -371,12 +469,18 @@ function LinkedinFeed() {
               </span>
               <span className="text-xs text-ink-500">{post.tempo}</span>
             </div>
-            <Image
-              src={linkedinImg}
-              alt=""
-              aria-hidden
-              className="ml-auto h-5 w-5 object-contain opacity-80"
-            />
+            <a
+              href={post.permalinkUrl || linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto"
+            >
+              <Image
+                src={linkedinImg}
+                alt="LinkedIn"
+                className="h-5 w-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
+              />
+            </a>
           </div>
 
           {/* Texto */}
@@ -384,27 +488,43 @@ function LinkedinFeed() {
             <p className="whitespace-pre-line text-sm leading-[1.6] text-[#BFBFBF] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:5] overflow-hidden">
               {post.texto}
             </p>
-            <button
-              type="button"
-              className="mt-1 text-xs font-medium text-brand transition-colors hover:text-brand-light"
-            >
-              ...ver mais
-            </button>
+            {post.permalinkUrl && (
+              <a
+                href={post.permalinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand transition-colors hover:text-brand-light"
+              >
+                Ver publicação completa no LinkedIn
+                <ArrowUpRight className="h-3 w-3" />
+              </a>
+            )}
           </div>
 
           {/* Imagem opcional */}
-          {post.temImagem && (
+          {(post.temImagem || post.imagemUrl) && (
             <div
-              className="relative h-[200px] w-full overflow-hidden"
-              style={{ backgroundColor: post.imagemBg }}
+              className="relative h-[220px] w-full overflow-hidden bg-[#0A0F1A]"
+              style={{ backgroundColor: post.imagemBg || "#0A0F1A" }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent" />
-              <Image
-                src={faviconImg}
-                alt=""
-                aria-hidden
-                className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.07]"
-              />
+              {post.imagemUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={post.imagemUrl}
+                  alt="LinkedIn Media"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.04] to-transparent" />
+                  <Image
+                    src={faviconImg}
+                    alt=""
+                    aria-hidden
+                    className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.07]"
+                  />
+                </>
+              )}
             </div>
           )}
 
@@ -418,10 +538,22 @@ function LinkedinFeed() {
               <MessageCircle className="h-4 w-4" aria-hidden />
               {post.comentarios}
             </span>
-            <span className="inline-flex items-center gap-2 text-sm transition-colors hover:text-ink-300">
-              <Repeat2 className="h-4 w-4" aria-hidden />
-              Compartilhar
-            </span>
+            {post.permalinkUrl ? (
+              <a
+                href={post.permalinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm transition-colors hover:text-ink-300"
+              >
+                <Repeat2 className="h-4 w-4" aria-hidden />
+                Compartilhar
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-2 text-sm transition-colors hover:text-ink-300">
+                <Repeat2 className="h-4 w-4" aria-hidden />
+                Compartilhar
+              </span>
+            )}
           </div>
         </Reveal>
       ))}

@@ -80,3 +80,11 @@ export const FILTROS: { label: string; value: TipoConteudo | "todos" }[] = [
 ];
 
 export const ARTIGOS: Artigo[] = [];
+
+export function getArtigoBySlug(slug: string): Artigo | undefined {
+  return ARTIGOS.find((a) => a.slug === slug);
+}
+
+export function getArtigosRelacionados(slug: string, limite = 3): Artigo[] {
+  return ARTIGOS.filter((a) => a.slug !== slug).slice(0, limite);
+}
