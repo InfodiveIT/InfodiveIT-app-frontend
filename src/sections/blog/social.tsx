@@ -5,6 +5,7 @@ import { api, SocialPostDTO } from "@/lib/api";
 import Image from "next/image";
 import {
   ArrowUpRight,
+  ChevronDown,
   Heart,
   MessageCircle,
   Repeat2,
@@ -21,7 +22,6 @@ type InstagramPostDisplay = {
   imagemBg?: string;
   imagemUrl?: string;
   permalinkUrl?: string;
-  altura: string;
   likes: number;
   comentarios: number;
   legenda: string;
@@ -42,7 +42,22 @@ type LinkedinPostDisplay = {
 const fallbackInstagramPosts: InstagramPostDisplay[] = [
   {
     imagemBg: "#0A0F1A",
-    altura: "280px",
+    likes: 215,
+    comentarios: 34,
+    legenda:
+      "🚀 Missão cumprida: 200 VMs migradas para Proxmox em um final de semana, zero downtime. Orgulho do time! #Virtualização #Proxmox #Infodive",
+    tempo: "1 semana atrás",
+  },
+  {
+    imagemBg: "#0A1215",
+    likes: 187,
+    comentarios: 29,
+    legenda:
+      "🤖 IA no ambiente corporativo: não é o futuro, é o presente. Como o Watson está sendo usado por clientes Infodive. #IA #IBM #Watson",
+    tempo: "2 semanas atrás",
+  },
+  {
+    imagemBg: "#0A0F1A",
     likes: 142,
     comentarios: 23,
     legenda:
@@ -51,7 +66,6 @@ const fallbackInstagramPosts: InstagramPostDisplay[] = [
   },
   {
     imagemBg: "#0A1A0A",
-    altura: "220px",
     likes: 98,
     comentarios: 11,
     legenda:
@@ -59,17 +73,7 @@ const fallbackInstagramPosts: InstagramPostDisplay[] = [
     tempo: "4 dias atrás",
   },
   {
-    imagemBg: "#1A0A1A",
-    altura: "320px",
-    likes: 215,
-    comentarios: 34,
-    legenda:
-      "🚀 Missão cumprida: 200 VMs migradas para Proxmox em um final de semana, zero downtime. Orgulho do time! #Virtualização #Proxmox #Infodive",
-    tempo: "1 semana atrás",
-  },
-  {
     imagemBg: "#1A100A",
-    altura: "240px",
     likes: 76,
     comentarios: 8,
     legenda:
@@ -77,17 +81,7 @@ const fallbackInstagramPosts: InstagramPostDisplay[] = [
     tempo: "1 semana atrás",
   },
   {
-    imagemBg: "#0A1215",
-    altura: "300px",
-    likes: 187,
-    comentarios: 29,
-    legenda:
-      "🤖 IA no ambiente corporativo: não é o futuro, é o presente. Como o Watson está sendo usado por clientes Infodive. #IA #IBM #Watson",
-    tempo: "2 semanas atrás",
-  },
-  {
     imagemBg: "#0F0A1A",
-    altura: "260px",
     likes: 63,
     comentarios: 6,
     legenda:
@@ -99,29 +93,11 @@ const fallbackInstagramPosts: InstagramPostDisplay[] = [
 const fallbackLinkedinPosts: LinkedinPostDisplay[] = [
   {
     texto:
-      "Acabamos de concluir mais um projeto de modernização de datacenter. O cliente tinha servidores legados com mais de 8 anos operando aplicações críticas. Em 90 dias, sem nenhuma interrupção do serviço, migramos tudo para uma nova infraestrutura Lenovo ThinkSystem.\n\nO resultado: 40% de redução no consumo energético, 3x mais capacidade de processamento e SLA de 99.98%.\n\nÉ por projetos assim que acordamos todo dia. 🚀",
-    temImagem: true,
-    imagemBg: "#0A0F1A",
-    likes: 94,
-    comentarios: 17,
-    tempo: "3 dias atrás",
-  },
-  {
-    texto:
       "Uma reflexão importante para gestores de TI:\n\nComprar tecnologia é a parte fácil. O que diferencia ambientes que funcionam de ambientes que travam é a execução — planejamento, implantação e sustentação feitos com método.\n\nNos últimos 20 anos vimos muitas empresas adquirirem soluções excelentes que nunca chegaram ao potencial por falta de um parceiro técnico sólido.\n\nÉ exatamente esse gap que a Infodive preenche.",
     temImagem: false,
     imagemBg: "",
     likes: 231,
     comentarios: 42,
-    tempo: "1 semana atrás",
-  },
-  {
-    texto:
-      'Publicamos um novo whitepaper: "Guia completo de recuperação de desastres com Veeam Data Platform".\n\nAbordamos RTO, RPO, backup imutável, e estratégias testadas em ambientes reais de clientes.\n\nDownload gratuito — link nos comentários. 👇',
-    temImagem: true,
-    imagemBg: "#0A1A0A",
-    likes: 78,
-    comentarios: 24,
     tempo: "1 semana atrás",
   },
   {
@@ -132,6 +108,24 @@ const fallbackLinkedinPosts: LinkedinPostDisplay[] = [
     likes: 156,
     comentarios: 38,
     tempo: "2 semanas atrás",
+  },
+  {
+    texto:
+      "Acabamos de concluir mais um projeto de modernização de datacenter. O cliente tinha servidores legados com mais de 8 anos operando aplicações críticas. Em 90 dias, sem nenhuma interrupção do serviço, migramos tudo para uma nova infraestrutura Lenovo ThinkSystem.\n\nO resultado: 40% de redução no consumo energético, 3x mais capacidade de processamento e SLA de 99.98%.\n\nÉ por projetos assim que acordamos todo dia. 🚀",
+    temImagem: true,
+    imagemBg: "#0A0F1A",
+    likes: 94,
+    comentarios: 17,
+    tempo: "3 dias atrás",
+  },
+  {
+    texto:
+      'Publicamos um novo whitepaper: "Guia completo de recuperação de desastres com Veeam Data Platform".\n\nAbordamos RTO, RPO, backup imutável, e estratégias testadas em ambientes reais de clientes.\n\nDownload gratuito — link nos comentários. 👇',
+    temImagem: true,
+    imagemBg: "#0A1A0A",
+    likes: 78,
+    comentarios: 24,
+    tempo: "1 semana atrás",
   },
 ];
 
@@ -167,7 +161,7 @@ export function BlogSocial() {
 
   const [instagramPosts, setInstagramPosts] = useState<InstagramPostDisplay[]>(fallbackInstagramPosts);
   const [linkedinPosts, setLinkedinPosts] = useState<LinkedinPostDisplay[]>(fallbackLinkedinPosts);
-  const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState<number>(6);
 
   useEffect(() => {
     api.configBlog()
@@ -185,12 +179,12 @@ export function BlogSocial() {
       api.socialPosts("LINKEDIN").catch(() => []),
     ]).then(([igData, liData]) => {
       if (igData && igData.length > 0) {
-        const alturas = ["280px", "240px", "310px", "260px", "290px", "250px"];
+        // Filtrar e ordenar pelos posts mais curtidos primeiro
+        const sortedIg = [...igData].sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0));
         setInstagramPosts(
-          igData.map((item, idx) => ({
+          sortedIg.map((item) => ({
             imagemUrl: item.imagemUrl,
             permalinkUrl: item.permalinkUrl,
-            altura: alturas[idx % alturas.length],
             likes: item.likesCount ?? 0,
             comentarios: item.commentsCount ?? 0,
             legenda: item.textoLegenda || "",
@@ -200,8 +194,10 @@ export function BlogSocial() {
       }
 
       if (liData && liData.length > 0) {
+        // Ordenar pelos posts mais curtidos do LinkedIn
+        const sortedLi = [...liData].sort((a, b) => (b.likesCount ?? 0) - (a.likesCount ?? 0));
         setLinkedinPosts(
-          liData.map((item) => ({
+          sortedLi.map((item) => ({
             texto: item.textoLegenda || "",
             temImagem: Boolean(item.imagemUrl && item.imagemUrl.length > 0),
             imagemUrl: item.imagemUrl,
@@ -212,10 +208,12 @@ export function BlogSocial() {
           }))
         );
       }
-    }).finally(() => {
-      setLoading(false);
     });
   }, []);
+
+  const postsAtuais = rede === "instagram" ? instagramPosts : linkedinPosts;
+  const postsExibidos = postsAtuais.slice(0, visibleCount);
+  const temMaisPosts = postsAtuais.length > visibleCount;
 
   return (
     <section className="relative overflow-hidden bg-[#050507] py-20 text-white md:py-28">
@@ -277,7 +275,10 @@ export function BlogSocial() {
               <button
                 key={item}
                 type="button"
-                onClick={() => setRede(item)}
+                onClick={() => {
+                  setRede(item);
+                  setVisibleCount(6);
+                }}
                 className={cn(
                   "relative -mb-px flex items-center gap-2 border-b-2 pb-3 text-sm font-medium capitalize transition-all",
                   ativo
@@ -303,15 +304,41 @@ export function BlogSocial() {
         {/* Feed */}
         <div className="mt-10">
           {rede === "instagram" ? (
-            <InstagramFeed posts={instagramPosts} instagramUrl={instagramUrl} />
+            <InstagramFeed posts={postsExibidos as InstagramPostDisplay[]} instagramUrl={instagramUrl} />
           ) : (
-            <LinkedinFeed posts={linkedinPosts} linkedinUrl={linkedinUrl} />
+            <LinkedinFeed posts={postsExibidos as LinkedinPostDisplay[]} linkedinUrl={linkedinUrl} />
           )}
         </div>
 
+        {/* Botão Ver Mais */}
+        {temMaisPosts ? (
+          <div className="mt-10 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => prev + 6)}
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:border-brand hover:bg-brand/10 hover:text-white"
+            >
+              Ver mais publicações
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="mt-10 flex justify-center">
+            <a
+              href={rede === "instagram" ? instagramUrl : linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-6 py-3 text-xs font-medium text-ink-300 transition-all hover:border-white/30 hover:text-white"
+            >
+              Ver perfil completo no {rede === "instagram" ? "Instagram" : "LinkedIn"}
+              <ArrowUpRight className="h-4 w-4" />
+            </a>
+          </div>
+        )}
+
         {/* Badge Informativa */}
         <p className="mt-12 text-center text-xs text-ink-500">
-          ⚡ Publicações atualizadas automaticamente das contas oficiais da Infodive IT.
+          ⚡ Publicações mais populares atualizadas automaticamente das contas oficiais da Infodive IT.
         </p>
       </div>
     </section>
@@ -346,30 +373,27 @@ function ProfileHeader({ permalinkUrl, instagramUrl }: { permalinkUrl?: string; 
   );
 }
 
-/** Feed do Instagram — mosaico/masonry de 3 colunas com alturas variáveis. */
+/** Feed do Instagram — grid responsiva moderna de 3 colunas com fotos proporcionais. */
 function InstagramFeed({ posts, instagramUrl }: { posts: InstagramPostDisplay[]; instagramUrl: string }) {
   return (
-    <div className="gap-6 sm:columns-2 lg:columns-3 [&>*]:mb-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {posts.map((post, index) => (
         <Reveal
           key={post.permalinkUrl || post.legenda.slice(0, 32) + index}
           delay={(index % 3) * 0.08}
-          className="break-inside-avoid"
+          className="flex h-full"
         >
-          <article className="group overflow-hidden rounded-xl border border-[#1E1E22] bg-[#0D0D0F] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#2A2A30]">
+          <article className="group flex w-full flex-col overflow-hidden rounded-xl border border-[#1E1E22] bg-[#0D0D0F] transition-all duration-300 hover:-translate-y-1 hover:border-[#2A2A30] hover:shadow-xl hover:shadow-brand/5">
             <ProfileHeader permalinkUrl={post.permalinkUrl} instagramUrl={instagramUrl} />
 
-            {/* Imagem */}
-            <div
-              className="relative w-full overflow-hidden bg-[#0A0F1A]"
-              style={{ height: post.altura, backgroundColor: post.imagemBg || "#0A0F1A" }}
-            >
+            {/* Imagem Proporcional com Aspect Square / Fit */}
+            <div className="relative aspect-square w-full overflow-hidden bg-[#07090E]">
               {post.imagemUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={post.imagemUrl}
                   alt={post.legenda ? post.legenda.slice(0, 50) : "Instagram Post"}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                 />
               ) : (
                 <>
@@ -378,20 +402,20 @@ function InstagramFeed({ posts, instagramUrl }: { posts: InstagramPostDisplay[];
                     src={faviconImg}
                     alt=""
                     aria-hidden
-                    className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.07]"
+                    className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.08]"
                   />
                 </>
               )}
             </div>
 
             {/* Interações */}
-            <div className="flex items-center gap-4 px-4 pt-3 text-ink-300">
-              <span className="inline-flex items-center gap-1.5 text-sm">
-                <Heart className="h-4 w-4" aria-hidden />
+            <div className="flex items-center gap-4 px-4 pt-3.5 text-ink-300">
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-white">
+                <Heart className="h-4 w-4 fill-red-500/20 text-red-500" aria-hidden />
                 {post.likes}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-sm">
-                <MessageCircle className="h-4 w-4" aria-hidden />
+              <span className="inline-flex items-center gap-1.5 text-sm text-ink-300">
+                <MessageCircle className="h-4 w-4 text-ink-400" aria-hidden />
                 {post.comentarios}
               </span>
               {post.permalinkUrl && (
@@ -399,9 +423,10 @@ function InstagramFeed({ posts, instagramUrl }: { posts: InstagramPostDisplay[];
                   href={post.permalinkUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-auto"
+                  className="ml-auto text-ink-400 transition-colors hover:text-white"
+                  title="Abrir no Instagram"
                 >
-                  <Send className="h-4 w-4 transition-colors hover:text-white" aria-hidden />
+                  <Send className="h-4 w-4" aria-hidden />
                 </a>
               )}
             </div>
@@ -409,7 +434,7 @@ function InstagramFeed({ posts, instagramUrl }: { posts: InstagramPostDisplay[];
             <div className="mx-4 mt-3 border-t border-white/[0.06]" />
 
             {/* Legenda */}
-            <div className="px-4 py-3">
+            <div className="flex flex-1 flex-col justify-between px-4 py-3">
               <p className="line-clamp-3 text-[13px] leading-[1.6] text-ink-300">
                 <span className="font-semibold text-white">infodive_it</span>{" "}
                 {post.legenda}
@@ -419,7 +444,7 @@ function InstagramFeed({ posts, instagramUrl }: { posts: InstagramPostDisplay[];
                   href={post.permalinkUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-brand transition-colors hover:text-brand-light"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand transition-colors hover:text-brand-light"
                 >
                   Ver no Instagram
                   <ArrowUpRight className="h-3 w-3" />
@@ -449,7 +474,7 @@ function LinkedinFeed({ posts, linkedinUrl }: { posts: LinkedinPostDisplay[]; li
           key={post.permalinkUrl || post.texto.slice(0, 32) + index}
           as="article"
           delay={(index % 2) * 0.08}
-          className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#1E1E22] bg-[#0D0D0F] transition-colors duration-300 hover:border-[#2A2A30]"
+          className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#1E1E22] bg-[#0D0D0F] transition-all duration-300 hover:border-[#2A2A30]"
         >
           {/* Header do post */}
           <div className="flex items-center gap-3 p-5">
@@ -478,7 +503,7 @@ function LinkedinFeed({ posts, linkedinUrl }: { posts: LinkedinPostDisplay[]; li
               <Image
                 src={linkedinImg}
                 alt="LinkedIn"
-                className="h-5 w-5 object-contain opacity-80 hover:opacity-100 transition-opacity"
+                className="h-5 w-5 object-contain opacity-80 transition-opacity hover:opacity-100"
               />
             </a>
           </div>
@@ -503,10 +528,7 @@ function LinkedinFeed({ posts, linkedinUrl }: { posts: LinkedinPostDisplay[]; li
 
           {/* Imagem opcional */}
           {(post.temImagem || post.imagemUrl) && (
-            <div
-              className="relative h-[220px] w-full overflow-hidden bg-[#0A0F1A]"
-              style={{ backgroundColor: post.imagemBg || "#0A0F1A" }}
-            >
+            <div className="relative aspect-video w-full overflow-hidden bg-[#07090E]">
               {post.imagemUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
@@ -530,8 +552,8 @@ function LinkedinFeed({ posts, linkedinUrl }: { posts: LinkedinPostDisplay[]; li
 
           {/* Ações */}
           <div className="mt-auto flex items-center gap-6 border-t border-white/[0.06] px-5 py-3.5 text-ink-500">
-            <span className="inline-flex items-center gap-2 text-sm transition-colors hover:text-ink-300">
-              <ThumbsUp className="h-4 w-4" aria-hidden />
+            <span className="inline-flex items-center gap-2 text-sm font-medium text-white transition-colors hover:text-ink-300">
+              <ThumbsUp className="h-4 w-4 text-brand" aria-hidden />
               {post.likes}
             </span>
             <span className="inline-flex items-center gap-2 text-sm transition-colors hover:text-ink-300">
