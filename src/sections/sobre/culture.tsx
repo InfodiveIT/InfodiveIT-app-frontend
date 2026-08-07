@@ -38,10 +38,18 @@ const FOTOS_FALLBACK: Foto[] = [
 export function SobreCultura() {
   const sectionRef = useRef<HTMLElement>(null);
   const [fotos, setFotos] = useState<Foto[]>(FOTOS_FALLBACK);
+  const [eyebrow, setEyebrow] = useState("Cultura");
+  const [headline, setHeadline] = useState("Gente que gosta de problema difícil.");
+  const [paragrafo, setParagrafo] = useState(
+    "Por trás de cada projeto há um time que estuda fabricante novo no fim de semana, atende chamado crítico de madrugada e celebra migração concluída como final de campeonato. É essa cultura que os clientes contratam junto com a tecnologia."
+  );
 
   useEffect(() => {
     api.sobreCultura()
       .then((data) => {
+        if (data.eyebrow) setEyebrow(data.eyebrow);
+        if (data.headline) setHeadline(data.headline);
+        if (data.paragrafo) setParagrafo(data.paragrafo);
         if (data.fotos && data.fotos.length > 0) {
           setFotos(data.fotos.map((f, i) => ({
             src: f.imagemUrl,
@@ -93,21 +101,18 @@ export function SobreCultura() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-5">
             <Reveal>
-              <p className="eyebrow">Cultura</p>
+              <p className="eyebrow">{eyebrow}</p>
             </Reveal>
             <Reveal delay={0.1}>
               <h2 className="text-balance">
-                Gente que gosta de problema difícil.
+                {headline}
               </h2>
             </Reveal>
           </div>
           <div className="lg:col-span-6 lg:col-start-7">
             <Reveal delay={0.2}>
               <p className="text-pretty leading-relaxed text-ink-500 lg:mt-2">
-                Por trás de cada projeto há um time que estuda fabricante novo
-                no fim de semana, atende chamado crítico de madrugada e celebra
-                migração concluída como final de campeonato. É essa cultura que
-                os clientes contratam junto com a tecnologia.
+                {paragrafo}
               </p>
             </Reveal>
           </div>
