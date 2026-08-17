@@ -237,10 +237,6 @@ export type ConfigBlogDTO = {
   socialDescricao?: string
   urlInstagram?: string
   urlLinkedin?: string
-  instagramAccessToken?: string
-  instagramAccountId?: string
-  linkedinAccessToken?: string
-  linkedinOrganizationId?: string
 }
 
 export type SocialPostDTO = {
