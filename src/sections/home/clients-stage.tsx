@@ -15,28 +15,19 @@ import {
   useInteractions,
   useRole,
 } from '@floating-ui/react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
+  createRef,
   useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
+  type RefObject,
 } from 'react'
 import type { ClienteHomeDTO } from '@/lib/api'
 import infodiveWordmark from '@/assets/logo/Logo Infodive 3.png'
+import { AnimatedBeam } from '@/components/animations/animated-beam'
 import { cn } from '@/lib/utils'
-import { getClientSlots, type ClientSlot } from './clients-layout'
-
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger)
-}
-
-const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 type ClientsStageProps = {
   clients: ClienteHomeDTO[]
@@ -45,11 +36,10 @@ type ClientsStageProps = {
   subtitle: string
 }
 
-type LogoCardProps = {
+type ClientNodeProps = {
   client: ClienteHomeDTO
-  slot: ClientSlot
+  nodeRef: RefObject<HTMLDivElement>
   desktop: boolean
-  interactionReady: boolean
   open: boolean
   anotherOpen: boolean
   mobileDetailsId: string
@@ -62,117 +52,100 @@ function getLogoKey(client: ClienteHomeDTO) {
 }
 
 function useMediaQuery(query: string) {
-  const [state, setState] = useState({ matches: false, resolved: false })
+  const [matches, setMatches] = useState(false)
 
   useEffect(() => {
     const media = window.matchMedia(query)
-    const update = () => setState({ matches: media.matches, resolved: true })
-
-    update()
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
+    setMatches(media.matches)
+    const listener = () => setMatches(media.matches)
+    media.addEventListener('change', listener)
+    return () => media.removeEventListener('change', listener)
   }, [query])
 
-  return state
+  return matches
 }
 
-function LogoCard({
+function ClientNode({
   client,
-  slot,
+  nodeRef,
   desktop,
-  interactionReady,
   open,
   anotherOpen,
   mobileDetailsId,
   onOpenChange,
   onImageError,
-}: LogoCardProps) {
+}: ClientNodeProps) {
   const { refs, floatingStyles, context } = useFloating({
     open,
     onOpenChange,
     placement: 'top',
     strategy: 'fixed',
-    middleware: [offset(12), flip({ padding: 16 }), shift({ padding: 16 })],
+    middleware: [offset(10), flip({ padding: 12 }), shift({ padding: 12 })],
     whileElementsMounted: open
       ? (reference, floating, update) =>
           autoUpdate(reference, floating, update, { animationFrame: true })
       : undefined,
   })
-  const hover = useHover(context, {
-    enabled: desktop && interactionReady,
-    mouseOnly: true,
-    move: false,
-  })
-  const focus = useFocus(context, { enabled: desktop && interactionReady })
-  const click = useClick(context, {
-    enabled: desktop && interactionReady,
-    event: 'click',
-    toggle: true,
-    ignoreMouse: true,
-  })
-  const dismiss = useDismiss(context, {
-    enabled: desktop && interactionReady,
-    escapeKey: true,
-    outsidePress: true,
-  })
+
+  const hover = useHover(context, { enabled: desktop, mouseOnly: true, move: false })
+  const focus = useFocus(context, { enabled: desktop })
+  const dismiss = useDismiss(context, { enabled: true, escapeKey: true, outsidePress: true })
   const role = useRole(context, { enabled: desktop, role: 'tooltip' })
+
   const { getReferenceProps, getFloatingProps } = useInteractions([
     hover,
     focus,
-    click,
     dismiss,
     role,
   ])
 
-  const slotStyle = {
-    '--client-left': `${slot.x}%`,
-    '--client-top': `${slot.y}%`,
-    '--client-rotation': `${slot.rotation}deg`,
-    '--client-scale': String(slot.scale),
-  } as CSSProperties
-
   return (
-    <li
+    <div
+      ref={nodeRef}
+      className="relative z-20 flex items-center justify-center"
       data-client-card
-      className="home-client-card relative z-10 min-h-[64px] min-w-0 sm:min-h-[72px] lg:absolute lg:h-[clamp(50px,4.5vw,66px)] lg:w-[clamp(100px,8.5vw,136px)]"
-      style={slotStyle}
     >
       <button
         ref={refs.setReference}
         type="button"
-        tabIndex={interactionReady ? 0 : -1}
+        tabIndex={0}
         aria-label={`Conhecer ${client.nome}`}
         aria-expanded={!desktop ? open : undefined}
         aria-controls={!desktop ? mobileDetailsId : undefined}
         {...getReferenceProps({
-          onClick: desktop
-            ? undefined
-            : () => interactionReady && onOpenChange(!open),
+          onClick: () => onOpenChange(!open),
         })}
         className={cn(
-          'group relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 shadow-[0_10px_25px_-12px_rgba(0,0,0,0.7)] outline-none backdrop-blur-md transition-[border-color,background-color,box-shadow,filter,opacity,transform] duration-200',
-          'hover:border-brand-accent/50 hover:bg-white/[0.08] hover:shadow-[0_12px_30px_-10px_rgba(14,102,255,0.3)] focus-visible:border-brand-accent focus-visible:ring-2 focus-visible:ring-brand-accent',
-          !interactionReady && 'pointer-events-none',
+          'group relative flex h-14 w-28 sm:h-16 sm:w-36 items-center justify-center overflow-hidden rounded-2xl border transition-all duration-300 outline-none backdrop-blur-xl',
+          'border-white/[0.08] bg-ink-900/80 shadow-[0_4px_20px_-6px_rgba(0,0,0,0.7)]',
+          'hover:border-brand-accent/60 hover:bg-ink-800/90 hover:shadow-[0_0_25px_rgba(14,102,255,0.35)] hover:scale-105',
+          'focus-visible:border-brand-accent focus-visible:ring-2 focus-visible:ring-brand-accent',
           open &&
-            'z-30 -translate-y-0.5 border-brand-accent/70 bg-white/[0.1] shadow-[0_14px_40px_-15px_rgba(14,102,255,0.5)]',
-          anotherOpen && 'opacity-30 saturate-50',
+            'border-brand-accent bg-ink-800 shadow-[0_0_30px_rgba(14,102,255,0.5)] scale-105',
+          anotherOpen && 'opacity-40 saturate-50',
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- Logos validadas ficam no navegador e não passam pelo otimizador remoto do Next.js. */}
+        {/* Glow sutil ao fundo do card */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-brand-accent/0 via-brand-accent/5 to-white/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        />
+
+        {/* eslint-disable-next-line @next/next/no-img-element -- Logos do Supabase */}
         <img
           src={client.logoUrl}
           alt=""
-          width={480}
-          height={180}
+          width={400}
+          height={160}
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
           onError={onImageError}
           className={cn(
-            'h-full max-h-[30px] w-full object-contain brightness-0 invert opacity-75 transition-[filter,opacity,transform] duration-200 sm:max-h-[34px] lg:max-h-[34px]',
+            'h-full max-h-7 sm:max-h-8 w-full px-3 object-contain brightness-0 invert opacity-75 transition-all duration-300',
             open
-              ? 'scale-[1.04] opacity-100'
-              : 'group-hover:opacity-100 group-hover:scale-[1.04] group-focus-visible:opacity-100',
+              ? 'opacity-100 scale-105'
+              : 'group-hover:opacity-100 group-hover:scale-105 group-focus-visible:opacity-100',
           )}
         />
       </button>
@@ -186,7 +159,7 @@ function LogoCard({
             className="z-[100] w-[min(260px,calc(100vw-32px))] rounded-xl border border-white/15 bg-ink-950/95 p-3.5 text-left shadow-2xl backdrop-blur-xl"
           >
             <p className="text-sm font-semibold text-white">{client.nome}</p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
               {client.segmento}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-ink-300">
@@ -195,23 +168,23 @@ function LogoCard({
           </div>
         </FloatingPortal>
       )}
-    </li>
+    </div>
   )
 }
 
-export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsStageProps) {
-  const rootRef = useRef<HTMLElement>(null)
-  const stageRef = useRef<HTMLDivElement>(null)
-  const wordmarkRef = useRef<HTMLDivElement>(null)
+export function ClientsStage({
+  clients,
+  eyebrow,
+  headline,
+  subtitle,
+}: ClientsStageProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const centerRef = useRef<HTMLDivElement>(null)
   const mobileDetailsId = useId()
   const [failedLogos, setFailedLogos] = useState<Set<string>>(() => new Set())
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [interactionReady, setInteractionReady] = useState(false)
-  const desktopQuery = useMediaQuery('(min-width: 1024px)')
-  const reducedMotionQuery = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const desktop = desktopQuery.matches
-  const reducedMotion = reducedMotionQuery.matches
-  const mediaQueriesResolved = desktopQuery.resolved && reducedMotionQuery.resolved
+  const desktop = useMediaQuery('(min-width: 1024px)')
+
   const currentLogoKeys = useMemo(
     () => new Set(clients.map(getLogoKey)),
     [clients],
@@ -220,135 +193,19 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
     () => clients.filter((client) => !failedLogos.has(getLogoKey(client))),
     [clients, failedLogos],
   )
-  const slots = useMemo(
-    () =>
-      visibleClients.length >= 6 && visibleClients.length <= 12
-        ? getClientSlots(visibleClients.length)
-        : [],
-    [visibleClients.length],
-  )
-  const animationKey = useMemo(
-    () =>
-      JSON.stringify(
-        visibleClients.map((client) => [client.id, client.logoUrl, client.ordem]),
-      ),
-    [visibleClients],
-  )
-  const selectedClient = visibleClients.find((client) => client.id === activeId) ?? null
 
   useEffect(() => {
     setFailedLogos((current) => {
       const retained = [...current].filter((key) => currentLogoKeys.has(key))
-
       return retained.length === current.size ? current : new Set(retained)
     })
   }, [currentLogoKeys])
 
-  useEffect(() => {
-    if (!mediaQueriesResolved) {
-      setInteractionReady(false)
-      return
-    }
-
-    if (!desktop || reducedMotion) {
-      setInteractionReady(true)
-      return
-    }
-
-    setInteractionReady(false)
-    setActiveId(null)
-  }, [desktop, mediaQueriesResolved, reducedMotion])
-
-  useEffect(() => {
-    if (activeId && !visibleClients.some((client) => client.id === activeId)) {
-      setActiveId(null)
-    }
-  }, [activeId, visibleClients])
-
-  useIsomorphicLayoutEffect(() => {
-    if (
-      !desktop ||
-      !mediaQueriesResolved ||
-      reducedMotion ||
-      !rootRef.current ||
-      !stageRef.current ||
-      slots.length < 6
-    ) {
-      return
-    }
-
-    const cards = Array.from(
-      stageRef.current.querySelectorAll<HTMLElement>('[data-client-card]'),
-    )
-    let ready = false
-    const context = gsap.context(() => {
-      gsap.set(cards, {
-        left: '50%',
-        top: '53%',
-        xPercent: -50,
-        yPercent: -50,
-        scale: 0.72,
-        rotation: 0,
-        opacity: 0.16,
-      })
-
-      const timeline = gsap.timeline({
-        scrollTrigger: {
-          trigger: rootRef.current,
-          start: 'top top',
-          end: () => `+=${Math.round(window.innerHeight * 0.75)}`,
-          pin: stageRef.current,
-          scrub: 0.6,
-          anticipatePin: 1,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            const nextReady = self.progress >= 0.7
-            if (nextReady !== ready) {
-              ready = nextReady
-              setInteractionReady(nextReady)
-              if (!nextReady) setActiveId(null)
-            }
-          },
-        },
-      })
-
-      cards.forEach((card, index) => {
-        const slot = slots[index]
-        timeline.to(
-          card,
-          {
-            left: `${slot.x}%`,
-            top: `${slot.y}%`,
-            scale: slot.scale,
-            rotation: slot.rotation,
-            opacity: 1,
-            duration: 0.5,
-            ease: 'power1.out',
-          },
-          0.04,
-        )
-      })
-
-      timeline.to(cards, { duration: 0.05, ease: 'power1.out' }, 0.6)
-      timeline.to({}, { duration: 0.25 }, 0.7)
-
-      if (wordmarkRef.current) {
-        timeline.fromTo(
-          wordmarkRef.current,
-          { scale: 0.94, opacity: 0.8 },
-          { scale: 1, opacity: 1, duration: 0.55, ease: 'none' },
-          0.04,
-        )
-      }
-    }, rootRef)
-    const refreshFrame = window.requestAnimationFrame(() => ScrollTrigger.refresh())
-
-    return () => {
-      window.cancelAnimationFrame(refreshFrame)
-      context.revert()
-      setActiveId(null)
-    }
-  }, [animationKey, desktop, mediaQueriesResolved, reducedMotion, slots])
+  // Criamos referências individuais para cada nó
+  const nodeRefs = useMemo(
+    () => visibleClients.map(() => createRef<HTMLDivElement>()),
+    [visibleClients.length], // eslint-disable-line react-hooks/exhaustive-deps
+  )
 
   if (visibleClients.length < 6 || visibleClients.length > 12) {
     return null
@@ -356,7 +213,6 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
 
   const markImageFailed = (client: ClienteHomeDTO) => {
     const logoKey = getLogoKey(client)
-
     setFailedLogos((current) => {
       if (current.has(logoKey)) return current
       const next = new Set(current)
@@ -365,99 +221,254 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
     })
   }
 
+  // Divisão balanceada dos clientes em 4 colunas (2 à esquerda, 2 à direita)
+  const total = visibleClients.length
+  const half = Math.ceil(total / 2)
+  const leftSide = visibleClients.slice(0, half)
+  const rightSide = visibleClients.slice(half)
+
+  const leftCol1 = leftSide.filter((_, i) => i % 2 === 0)
+  const leftCol2 = leftSide.filter((_, i) => i % 2 !== 0)
+  const rightCol1 = rightSide.filter((_, i) => i % 2 === 0)
+  const rightCol2 = rightSide.filter((_, i) => i % 2 !== 0)
+
+  const selectedClient = visibleClients.find((c) => c.id === activeId) ?? null
+
   return (
     <section
       id="clientes"
-      ref={rootRef}
       aria-labelledby="clientes-heading"
-      className="relative isolate overflow-clip bg-ink-950 text-white"
+      className="relative isolate overflow-hidden bg-ink-950 py-20 sm:py-28 text-white"
     >
+      {/* Background radial glow e grid sutil */}
       <div
-        ref={stageRef}
-        className="relative min-h-[100svh] overflow-clip px-5 py-20 sm:px-8 lg:h-[100svh] lg:min-h-[600px] lg:px-0 lg:py-0"
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:40px_40px]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-accent/10 blur-[130px]"
+      />
+
+      {/* Header */}
+      <header className="relative z-30 mx-auto max-w-3xl px-4 text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-accent sm:text-xs">
+          {eyebrow}
+        </p>
+        <h2
+          id="clientes-heading"
+          className="mt-3 text-balance text-2xl font-semibold tracking-[-0.035em] text-white sm:text-3xl lg:text-[clamp(2rem,3vw,3rem)]"
+        >
+          {headline}
+        </h2>
+        <p className="mx-auto mt-3 max-w-2xl text-pretty text-xs font-light leading-relaxed text-ink-300 sm:text-sm">
+          {subtitle}
+        </p>
+      </header>
+
+      {/* Stage do Ecossistema Interconectado */}
+      <div
+        ref={containerRef}
+        className="relative mx-auto mt-14 flex max-w-6xl items-center justify-center px-4 sm:px-8 min-h-[460px]"
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px),radial-gradient(circle_at_50%_48%,rgba(14,102,255,0.14),transparent_40%)] [background-size:48px_48px,48px_48px,100%_100%]"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/45 to-transparent"
-        />
+        {/* Layout Desktop com 5 colunas interligadas */}
+        {desktop ? (
+          <div className="flex w-full items-center justify-between gap-6">
+            {/* Coluna Esquerda 1 (Externa) */}
+            <div className="flex flex-col justify-around gap-8">
+              {leftCol1.map((client) => {
+                const originalIndex = visibleClients.findIndex((c) => c.id === client.id)
+                return (
+                  <ClientNode
+                    key={client.id}
+                    client={client}
+                    nodeRef={nodeRefs[originalIndex]}
+                    desktop={desktop}
+                    open={activeId === client.id}
+                    anotherOpen={activeId !== null && activeId !== client.id}
+                    mobileDetailsId={mobileDetailsId}
+                    onOpenChange={(open) =>
+                      setActiveId((current) => (open ? client.id : current === client.id ? null : current))
+                    }
+                    onImageError={() => markImageFailed(client)}
+                  />
+                )
+              })}
+            </div>
 
-        <header className="relative z-40 mx-auto max-w-3xl text-center lg:absolute lg:left-1/2 lg:top-[6%] lg:w-full lg:-translate-x-1/2">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-accent sm:text-xs">
-            {eyebrow}
-          </p>
-          <h2
-            id="clientes-heading"
-            className="mt-2.5 text-balance text-2xl font-semibold tracking-[-0.035em] text-white sm:text-3xl lg:text-[clamp(1.85rem,2.8vw,2.75rem)]"
-          >
-            {headline}
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-pretty text-xs font-light leading-relaxed text-ink-300 sm:text-sm">
-            {subtitle}
-          </p>
-        </header>
+            {/* Coluna Esquerda 2 (Interna) */}
+            <div className="flex flex-col justify-around gap-12">
+              {leftCol2.map((client) => {
+                const originalIndex = visibleClients.findIndex((c) => c.id === client.id)
+                return (
+                  <ClientNode
+                    key={client.id}
+                    client={client}
+                    nodeRef={nodeRefs[originalIndex]}
+                    desktop={desktop}
+                    open={activeId === client.id}
+                    anotherOpen={activeId !== null && activeId !== client.id}
+                    mobileDetailsId={mobileDetailsId}
+                    onOpenChange={(open) =>
+                      setActiveId((current) => (open ? client.id : current === client.id ? null : current))
+                    }
+                    onImageError={() => markImageFailed(client)}
+                  />
+                )
+              })}
+            </div>
 
-        <div
-          ref={wordmarkRef}
-          className="relative z-30 mx-auto mb-8 mt-10 flex w-[min(50vw,190px)] items-center justify-center rounded-xl border border-white/10 bg-black/40 px-4 py-3 shadow-[0_20px_50px_-20px_rgba(14,102,255,0.4)] backdrop-blur-xl lg:absolute lg:left-1/2 lg:top-[53%] lg:m-0 lg:w-[clamp(160px,14vw,210px)] lg:-translate-x-1/2 lg:-translate-y-1/2"
-        >
-          <Image
-            src={infodiveWordmark}
-            alt="Infodive IT"
-            priority={false}
-            sizes="(min-width: 1024px) 210px, 190px"
-            className="h-auto w-full object-contain"
-          />
-        </div>
+            {/* Hub Central da Infodive */}
+            <div
+              ref={centerRef}
+              className="relative z-30 flex h-24 w-44 items-center justify-center rounded-2xl border border-brand-accent/40 bg-ink-900/90 p-4 shadow-[0_0_50px_-10px_rgba(14,102,255,0.5)] backdrop-blur-2xl transition-all duration-300 hover:shadow-[0_0_65px_-5px_rgba(14,102,255,0.7)]"
+            >
+              {/* Pulse rings concêntricos */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-1.5 rounded-2xl border border-brand-accent/20 animate-pulse"
+              />
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-3 rounded-3xl border border-brand-accent/10 opacity-50"
+              />
 
-        <ul
-          aria-label="Clientes da Infodive"
-          className="relative z-20 mx-auto grid max-w-2xl grid-cols-2 gap-2.5 sm:grid-cols-3 lg:absolute lg:inset-0 lg:block lg:max-w-none"
-        >
-          {visibleClients.map((client, index) => (
-            <LogoCard
-              key={client.id}
-              client={client}
-              slot={slots[index]}
-              desktop={desktop}
-              interactionReady={interactionReady}
-              open={activeId === client.id}
-              anotherOpen={activeId !== null && activeId !== client.id}
-              mobileDetailsId={mobileDetailsId}
-              onOpenChange={(open) =>
-                setActiveId((current) => (open ? client.id : current === client.id ? null : current))
-              }
-              onImageError={() => markImageFailed(client)}
-            />
-          ))}
-        </ul>
+              <Image
+                src={infodiveWordmark}
+                alt="Infodive IT Hub"
+                priority={false}
+                className="h-auto w-full object-contain drop-shadow-[0_2px_8px_rgba(14,102,255,0.4)]"
+              />
+            </div>
 
-        {!desktop && (
-          <div
-            id={mobileDetailsId}
-            role="region"
-            aria-label="Detalhes do cliente selecionado"
-            aria-live="polite"
-            className="relative z-30 mx-auto mt-6 min-h-[110px] max-w-xl rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center backdrop-blur-md lg:hidden"
-          >
-            {selectedClient ? (
-              <>
-                <p className="text-sm font-semibold text-white">{selectedClient.nome}</p>
-                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
-                  {selectedClient.segmento}
+            {/* Coluna Direita 2 (Interna) */}
+            <div className="flex flex-col justify-around gap-12">
+              {rightCol2.map((client) => {
+                const originalIndex = visibleClients.findIndex((c) => c.id === client.id)
+                return (
+                  <ClientNode
+                    key={client.id}
+                    client={client}
+                    nodeRef={nodeRefs[originalIndex]}
+                    desktop={desktop}
+                    open={activeId === client.id}
+                    anotherOpen={activeId !== null && activeId !== client.id}
+                    mobileDetailsId={mobileDetailsId}
+                    onOpenChange={(open) =>
+                      setActiveId((current) => (open ? client.id : current === client.id ? null : current))
+                    }
+                    onImageError={() => markImageFailed(client)}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Coluna Direita 1 (Externa) */}
+            <div className="flex flex-col justify-around gap-8">
+              {rightCol1.map((client) => {
+                const originalIndex = visibleClients.findIndex((c) => c.id === client.id)
+                return (
+                  <ClientNode
+                    key={client.id}
+                    client={client}
+                    nodeRef={nodeRefs[originalIndex]}
+                    desktop={desktop}
+                    open={activeId === client.id}
+                    anotherOpen={activeId !== null && activeId !== client.id}
+                    mobileDetailsId={mobileDetailsId}
+                    onOpenChange={(open) =>
+                      setActiveId((current) => (open ? client.id : current === client.id ? null : current))
+                    }
+                    onImageError={() => markImageFailed(client)}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Animated Beams conectando cada cliente ao Hub Central */}
+            {visibleClients.map((client, index) => {
+              const isLeft = index < half
+              // Curvatura harmônica baseada na posição vertical
+              const verticalOffset = (index % 3) - 1 // -1 (topo), 0 (meio), 1 (baixo)
+              const curvature = verticalOffset * (isLeft ? -45 : 45)
+              const duration = 3.5 + (index % 3) * 0.8
+              const delay = (index % 4) * 0.5
+
+              return (
+                <AnimatedBeam
+                  key={`beam-${client.id}`}
+                  containerRef={containerRef}
+                  fromRef={nodeRefs[index]}
+                  toRef={centerRef}
+                  curvature={curvature}
+                  duration={duration}
+                  delay={delay}
+                  pathColor="rgba(255, 255, 255, 0.08)"
+                  pathWidth={1.5}
+                  gradientStartColor="#0E66FF"
+                  gradientStopColor="#38BDF8"
+                  reverse={!isLeft}
+                />
+              )
+            })}
+          </div>
+        ) : (
+          /* Layout Mobile / Tablet (< lg): Grid Interativo com Hub no Topo */
+          <div className="flex flex-col items-center gap-6 w-full">
+            <div className="relative z-30 flex h-18 w-36 items-center justify-center rounded-xl border border-brand-accent/40 bg-ink-900/90 p-3 shadow-[0_0_35px_-8px_rgba(14,102,255,0.5)]">
+              <Image
+                src={infodiveWordmark}
+                alt="Infodive IT Hub"
+                priority={false}
+                className="h-auto w-full object-contain"
+              />
+            </div>
+
+            <ul
+              aria-label="Clientes da Infodive"
+              className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-lg"
+            >
+              {visibleClients.map((client, index) => (
+                <ClientNode
+                  key={client.id}
+                  client={client}
+                  nodeRef={nodeRefs[index]}
+                  desktop={desktop}
+                  open={activeId === client.id}
+                  anotherOpen={activeId !== null && activeId !== client.id}
+                  mobileDetailsId={mobileDetailsId}
+                  onOpenChange={(open) =>
+                    setActiveId((current) => (open ? client.id : current === client.id ? null : current))
+                  }
+                  onImageError={() => markImageFailed(client)}
+                />
+              ))}
+            </ul>
+
+            {/* Painel de detalhes do cliente selecionado no mobile */}
+            <div
+              id={mobileDetailsId}
+              role="region"
+              aria-label="Detalhes do cliente selecionado"
+              aria-live="polite"
+              className="relative z-30 mx-auto mt-2 min-h-[90px] w-full max-w-lg rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center backdrop-blur-md"
+            >
+              {selectedClient ? (
+                <>
+                  <p className="text-sm font-semibold text-white">{selectedClient.nome}</p>
+                  <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
+                    {selectedClient.segmento}
+                  </p>
+                  <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-ink-300">
+                    {selectedClient.descricaoCurta}
+                  </p>
+                </>
+              ) : (
+                <p className="flex min-h-[50px] items-center justify-center text-xs text-ink-300">
+                  Toque em uma marca para conhecer
                 </p>
-                <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-ink-300">
-                  {selectedClient.descricaoCurta}
-                </p>
-              </>
-            ) : (
-              <p className="flex min-h-[70px] items-center justify-center text-xs text-ink-300">
-                Toque em uma marca para conhecer
-              </p>
-            )}
+              )}
+            </div>
           </div>
         )}
       </div>

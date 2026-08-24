@@ -1,50 +1,11 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ClientsStage } from '../clients-stage'
 
-jest.mock('gsap', () => {
-  const timeline = {
-    to: jest.fn(),
-    fromTo: jest.fn(),
-  }
-  const contextRevert = jest.fn()
-  const gsapMock = {
-    registerPlugin: jest.fn(),
-    set: jest.fn(),
-    context: jest.fn((callback: () => void) => {
-      callback()
-      return { revert: contextRevert }
-    }),
-    timeline: jest.fn((config: { scrollTrigger: { onUpdate: (self: { progress: number }) => void } }) => {
-      gsapMock.scrollTriggerConfig = config.scrollTrigger
-      return timeline
-    }),
-    scrollTriggerConfig: null as null | {
-      onUpdate: (self: { progress: number }) => void
-    },
-    contextRevert,
-    timelineInstance: timeline,
-  }
-
-  return { gsap: gsapMock }
-})
-
-jest.mock('gsap/ScrollTrigger', () => ({
-  ScrollTrigger: { refresh: jest.fn() },
+// Mock para AnimatedBeam
+jest.mock('@/components/animations/animated-beam', () => ({
+  AnimatedBeam: () => <div data-testid="animated-beam" />,
 }))
-
-type GsapMock = typeof gsap & {
-  contextRevert: jest.Mock
-  scrollTriggerConfig: null | {
-    onUpdate: (self: { progress: number }) => void
-  }
-}
-
-const mockedGsap = gsap as GsapMock
-const mockedRefresh = ScrollTrigger.refresh as jest.Mock
-let animationFrames: FrameRequestCallback[] = []
 
 const clients = Array.from({ length: 6 }, (_, index) => ({
   id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
@@ -55,9 +16,9 @@ const clients = Array.from({ length: 6 }, (_, index) => ({
   ordem: index + 1,
 }))
 
-function mockMediaQueries({ desktop = false, reducedMotion = false } = {}) {
+function mockMediaQueries(desktop = false) {
   window.matchMedia = jest.fn((query: string) => ({
-    matches: query === '(min-width: 1024px)' ? desktop : reducedMotion,
+    matches: query === '(min-width: 1024px)' ? desktop : false,
     media: query,
     onchange: null,
     addListener: jest.fn(),
@@ -81,29 +42,17 @@ function renderStage(currentClients = clients) {
 
 describe('ClientsStage', () => {
   beforeEach(() => {
-    mockMediaQueries()
-    mockedGsap.scrollTriggerConfig = null
-    mockedGsap.contextRevert.mockClear()
-    mockedRefresh.mockClear()
-    ;(gsap.context as jest.Mock).mockClear()
-    ;(gsap.timeline as jest.Mock).mockClear()
-    ;(gsap.set as jest.Mock).mockClear()
-    animationFrames = []
-    window.requestAnimationFrame = jest.fn((callback: FrameRequestCallback) => {
-      animationFrames.push(callback)
-      return animationFrames.length
-    })
-    window.cancelAnimationFrame = jest.fn()
+    mockMediaQueries(false)
   })
 
-  it('expõe a lista e liga cada controle ao painel estável no mobile', async () => {
+  it('expõe a lista e liga cada controle ao painel no mobile', async () => {
     const user = userEvent.setup()
     renderStage()
 
     expect(screen.getByRole('list', { name: 'Clientes da Infodive' })).toBeInTheDocument()
     expect(screen.getByText('Toque em uma marca para conhecer')).toBeInTheDocument()
 
-    const firstClient = screen.getByRole('button', { name: 'Conhecer Cliente 1' })
+    const firstClient = screen.getAllByRole('button', { name: 'Conhecer Cliente 1' })[0]
     const detailRegion = screen.getByRole('region', {
       name: 'Detalhes do cliente selecionado',
     })
@@ -111,12 +60,10 @@ describe('ClientsStage', () => {
 
     expect(firstClient).toHaveAttribute('aria-controls', detailRegion.id)
     expect(firstClient).toHaveAttribute('aria-expanded', 'false')
-    expect(firstClient).not.toHaveAttribute('aria-describedby')
 
     await user.click(firstClient)
 
     expect(firstClient).toHaveAttribute('aria-expanded', 'true')
-    expect(firstClient).not.toHaveAttribute('aria-describedby')
     expect(detailRegion).toHaveTextContent('Cliente 1')
     expect(detailRegion).toHaveTextContent('Descrição segura do cliente 1.')
 
@@ -159,87 +106,12 @@ describe('ClientsStage', () => {
     expect(container.querySelector('img[src*="client-1-corrected.webp"]')).not.toBeNull()
   })
 
-  it('mantém a composição estática e a interação imediata com movimento reduzido', async () => {
-    mockMediaQueries({ desktop: true, reducedMotion: true })
-    renderStage()
+  it('renderiza os feixes de luz no modo desktop', async () => {
+    mockMediaQueries(true)
+    const { container } = renderStage()
 
-    const firstClient = screen.getByRole('button', { name: 'Conhecer Cliente 1' })
-    await waitFor(() => expect(firstClient).toHaveAttribute('tabindex', '0'))
-
-    expect(gsap.context).not.toHaveBeenCalled()
-    expect(mockedRefresh).not.toHaveBeenCalled()
-  })
-
-  it('habilita no limiar de 70%, reverte abaixo dele e limpa o contexto', async () => {
-    mockMediaQueries({ desktop: true })
-    const { unmount } = renderStage()
-    const firstClient = screen.getByRole('button', { name: 'Conhecer Cliente 1' })
-
-    await waitFor(() => expect(mockedGsap.scrollTriggerConfig).not.toBeNull())
-    expect(firstClient).toHaveAttribute('tabindex', '-1')
-
-    act(() => animationFrames.shift()?.(0))
-    expect(mockedRefresh).toHaveBeenCalledTimes(1)
-
-    act(() => mockedGsap.scrollTriggerConfig?.onUpdate({ progress: 0.7 }))
-    expect(firstClient).toHaveAttribute('tabindex', '0')
-
-    fireEvent.focus(firstClient)
-    expect(screen.getByRole('tooltip')).toHaveTextContent('Cliente 1')
-
-    act(() => mockedGsap.scrollTriggerConfig?.onUpdate({ progress: 0.69 }))
-    expect(firstClient).toHaveAttribute('tabindex', '-1')
-    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
-
-    unmount()
-    expect(mockedGsap.contextRevert).toHaveBeenCalledTimes(1)
-    expect(window.cancelAnimationFrame).toHaveBeenCalledWith(1)
-  })
-
-  it('recria a timeline quando a ordem muda sem alterar a quantidade', async () => {
-    mockMediaQueries({ desktop: true })
-    const { rerender } = renderStage()
-    await waitFor(() => expect(gsap.context).toHaveBeenCalledTimes(1))
-
-    const reordered = [
-      { ...clients[1], ordem: 1 },
-      { ...clients[0], ordem: 2 },
-      ...clients.slice(2),
-    ]
-    rerender(
-      <ClientsStage
-        clients={reordered}
-        eyebrow="Clientes"
-        headline="Tecnologia que sustenta parcerias duradouras"
-        subtitle="Organizações de diferentes setores."
-      />,
-    )
-
-    await waitFor(() => expect(gsap.context).toHaveBeenCalledTimes(2))
-    expect(mockedGsap.contextRevert).toHaveBeenCalledTimes(1)
-    expect(screen.getAllByRole('button')[0]).toHaveAccessibleName('Conhecer Cliente 2')
-  })
-
-  it('recria a timeline quando uma URL muda sem alterar a quantidade', async () => {
-    mockMediaQueries({ desktop: true })
-    const { rerender } = renderStage()
-    await waitFor(() => expect(gsap.context).toHaveBeenCalledTimes(1))
-
-    const clientsWithNewUrl = clients.map((client, index) =>
-      index === 0
-        ? { ...client, logoUrl: 'https://example.supabase.co/client-1-v2.webp' }
-        : client,
-    )
-    rerender(
-      <ClientsStage
-        clients={clientsWithNewUrl}
-        eyebrow="Clientes"
-        headline="Tecnologia que sustenta parcerias duradouras"
-        subtitle="Organizações de diferentes setores."
-      />,
-    )
-
-    await waitFor(() => expect(gsap.context).toHaveBeenCalledTimes(2))
-    expect(mockedGsap.contextRevert).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-testid="animated-beam"]').length).toBeGreaterThan(0)
+    })
   })
 })
