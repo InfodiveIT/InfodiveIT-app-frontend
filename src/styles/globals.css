@@ -165,6 +165,23 @@
    ============================================================ */
 
 @layer utilities {
+  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+    .home-client-card {
+      left: 50%;
+      top: 54%;
+      opacity: 0.16;
+      transform: translate(-50%, -50%) rotate(0deg) scale(0.72);
+    }
+  }
+
+  @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+    .home-client-card {
+      left: var(--client-left);
+      top: var(--client-top);
+      transform: translate(-50%, -50%) rotate(var(--client-rotation)) scale(var(--client-scale));
+    }
+  }
+
   .text-balance {
     text-wrap: balance;
   }
@@ -766,4 +783,3 @@
 .footer-wrap a:hover {
   color: #ffffff !important;
 }
-

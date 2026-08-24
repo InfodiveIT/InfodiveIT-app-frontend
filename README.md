@@ -125,6 +125,7 @@ Bordas padrão: `rounded` (8px) e `rounded-lg` (12px).
 | Variável | Descrição | Obrigatória |
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | URL base da API do backend (ex.: `http://localhost:8080/api`) | Sim |
+| `API_URL_INTERNAL` | URL server-only dos Server Components (ex.: `http://backend:8080/api/v1` no Docker Compose) | Em containers |
 | `NEXT_PUBLIC_SITE_URL` | URL pública do site (ex.: `http://localhost:3000`) | Não |
 
 ## Scripts Disponíveis
@@ -188,11 +189,11 @@ cobertura por não serem unitariamente testáveis de forma significativa.
 
 ## Conexão com o Backend
 
-O cliente HTTP está em [src/lib/api.ts](src/lib/api.ts) e usa
-`NEXT_PUBLIC_API_URL` como base. As consultas usam ISR do Next.js com revalidação
-de 60 segundos por padrão (`next: { revalidate: 60 }`); o envio de lead usa
-`revalidate: 0` (sempre fresco). Os DTOs em `api.ts` espelham os contratos do
-backend Spring Boot.
+O cliente HTTP está em [src/lib/api.ts](src/lib/api.ts). No navegador ele usa
+`NEXT_PUBLIC_API_URL`; em Server Components, prefere `API_URL_INTERNAL` e cai
+para a URL pública quando essa variável não existe. Conteúdos que precisam
+refletir revogação imediata podem usar `cache: "no-store"`. Os DTOs em `api.ts`
+espelham os contratos do backend Spring Boot.
 
 Endpoints esperados: `GET /categorias`, `GET /produtos` (filtros), `GET /produtos/{slug}`,
 `GET /fabricantes`, `GET /servicos`, `GET /conteudos`, `GET /banners`, `POST /leads`.

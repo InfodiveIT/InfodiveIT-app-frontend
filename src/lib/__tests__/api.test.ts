@@ -219,6 +219,22 @@ describe("api", () => {
     });
   });
 
+  describe("homeClientes()", () => {
+    it("busca somente o endpoint público sem cache", async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [],
+      });
+
+      await api.homeClientes();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/home-clientes"),
+        expect.objectContaining({ cache: "no-store" }),
+      );
+    });
+  });
+
   describe("solucoes()", () => {
     it("faz fetch para /solucoes", async () => {
       const mockResponse: any[] = [];

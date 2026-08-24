@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "assetVersion": "v1",
+  "generatedBy": "node client-logos-ready/prepare.mjs",
+  "sourceDirectory": "src/assets/logos-clientes",
+  "outputDirectory": "client-logos-ready",
+  "canvas": {
+    "width": 480,
+    "height": 180,
+    "fit": "contain",
+    "background": "transparent"
+  },
+  "encoding": {
+    "format": "webp",
+    "quality": 92,
+    "alphaQuality": 100,
+    "smartSubsample": true,
+    "effort": 6
+  },
+  "limits": {
+    "maxFileBytes": 150000,
+    "maxTotalBytes": 460000
+  },
+  "totals": {
+    "clientCount": 12,
+    "bytes": 237464
+  },
+  "clients": [
+    {
+      "source": "src/assets/logos-clientes/5.svg",
+      "sourceSha256": "9df06cd1498c07e1ff60d2717fcb5a320c76645928ce2e51d7abe9edff0e0082",
+      "name": "Banco Topázio",
+      "slug": "banco-topazio",
+      "filename": "banco-topazio.webp",
+      "order": 1,
+      "bytes": 12100,
+      "sha256": "53f2de5950f33abbe48c3ec52b263dfe16e543bc725417eb56d8a08684d3f2c8"
+    },
+    {
+      "source": "src/assets/logos-clientes/10.svg",
+      "sourceSha256": "1f1f25e8e3739f63451ad2d8800691b0b5fb4fb47df4715bbf806b773e6c44b0",
+      "name": "Sicredi",
+      "slug": "sicredi",
+      "filename": "sicredi.webp",
+      "order": 2,
+      "bytes": 22758,
+      "sha256": "5280e76013485f8cead34024e309c705b24156ebec4683ab840050b7e761ae18"
+    },
+    {
+      "source": "src/assets/logos-clientes/4.svg",
+      "sourceSha256": "ef4d96741064046c66fc4a5584dfed5afb31b093eee330d5e363942a4369cf33",
+      "name": "Peccin",
+      "slug": "peccin",
+      "filename": "peccin.webp",
+      "order": 3,
+      "bytes": 22140,
+      "sha256": "74d78c4a598555b4c4dc83d55ebb0a89f43fac63c162a03fd702cab54e00e9f8"
+    },
+    {
+      "source": "src/assets/logos-clientes/8.svg",
+      "sourceSha256": "ba3cbad78b36d716e73faae95e424bd07afe1220ef2e3823ac721ad4c69da41c",
+      "name": "Panvel",
+      "slug": "panvel",
+      "filename": "panvel.webp",
+      "order": 4,
+      "bytes": 17822,
+      "sha256": "ecd75cbabdcb6f47f1af5b56f11fcfc4f7ee31fcc1525b3553b7731126a24b22"
+    },
+    {
+      "source": "src/assets/logos-clientes/2.svg",
+      "sourceSha256": "d80b19cad0b63d26732eafcf8df69c0ea5fa3605631e33ae5bd0567e96861bbb",
+      "name": "Mundial S.A.",
+      "slug": "mundial-sa",
+      "filename": "mundial-sa.webp",
+      "order": 5,
+      "bytes": 25838,
+      "sha256": "936117bbf70a51c826d050bac7d70b517178b8d3f911e87537e991fa1ba87f33"
+    },
+    {
+      "source": "src/assets/logos-clientes/9.svg",
+      "sourceSha256": "ac0678d74e601ef5e3baf510bc70d7ea5c2114f155b09d20a6441d8305b52013",
+      "name": "STIHL",
+      "slug": "stihl",
+      "filename": "stihl.webp",
+      "order": 6,
+      "bytes": 14726,
+      "sha256": "22cb9f06405f9940a36d8adfaa30422272b332e8568240043851cc28f120d573"
+    },
+    {
+      "source": "src/assets/logos-clientes/1.svg",
+      "sourceSha256": "218448ef803f36799cc275ab08bc02d2eee6c1248e1c2c6345a54d39dcc3275c",
+      "name": "Ação Sistemas",
+      "slug": "acao-sistemas",
+      "filename": "acao-sistemas.webp",
+      "order": 7,
+      "bytes": 11652,
+      "sha256": "0e66ca5ed92f1e570ff432df5a0df3c28faef7ba55971f172ef210c3c68549fd"
+    },
+    {
+      "source": "src/assets/logos-clientes/7.svg",
+      "sourceSha256": "d54c34a535d370bab3d95c270f0be435172090c00baed49cabbc7817580c599b",
+      "name": "Getnet",
+      "slug": "getnet",
+      "filename": "getnet.webp",
+      "order": 8,
+      "bytes": 16104,
+      "sha256": "f06ea281a1e18474646380be31ee64816c61b482d973c23994322172444ffaae"
+    },
+    {
+      "source": "src/assets/logos-clientes/3.svg",
+      "sourceSha256": "7a1682db8a6ae1c2898ed8996d5ea6ab7c5befd2a6f33637d19585bb64ee779a",
+      "name": "Saque e Pague",
+      "slug": "saque-e-pague",
+      "filename": "saque-e-pague.webp",
+      "order": 9,
+      "bytes": 24664,
+      "sha256": "2d6373b5a677d66a5a746eae44635590d7e6c77c930a5c1cb9eec5f4aa150ab3"
+    },
+    {
+      "source": "src/assets/logos-clientes/12.svg",
+      "sourceSha256": "b15cc98584ac51466b1394a264b97ce47ba955e9c3582a7e6a4fca712b99b367",
+      "name": "GHC",
+      "slug": "ghc",
+      "filename": "ghc.webp",
+      "order": 10,
+      "bytes": 23176,
+      "sha256": "5eb6fec00ca076e0d2d88622ade260754c5e5865871a3cb959753a58a623f616"
+    },
+    {
+      "source": "src/assets/logos-clientes/6.svg",
+      "sourceSha256": "992554f697e22cf1a694a9c515be4d14a09db28bd282b156406865001c4bbbd7",
+      "name": "OLFAR",
+      "slug": "olfar",
+      "filename": "olfar.webp",
+      "order": 11,
+      "bytes": 20420,
+      "sha256": "88121381655ab639c19a9637ec01e41cb909c4843a2712236dbda26f4e017189"
+    },
+    {
+      "source": "src/assets/logos-clientes/11.svg",
+      "sourceSha256": "edb28c281f54da50b940fc2554549d14deaf01bd0ca444567a6c8b621a84d062",
+      "name": "Sementes Estrela",
+      "slug": "sementes-estrela",
+      "filename": "sementes-estrela.webp",
+      "order": 12,
+      "bytes": 26064,
+      "sha256": "98d14fbe3179077ff5998495e6b634781f044fe72920020d37f76058219b2928"
+    }
+  ]
+}

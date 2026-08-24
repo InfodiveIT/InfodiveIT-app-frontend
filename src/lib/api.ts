@@ -6,7 +6,15 @@
  * de 60 segundos, permitindo respostas rápidas e cache integrado do Next.js.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
+const PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
+
+function getApiUrl(): string {
+  if (typeof window === 'undefined') {
+    return process.env.API_URL_INTERNAL || PUBLIC_API_URL
+  }
+
+  return PUBLIC_API_URL
+}
 
 /**
  * Normaliza qualquer formato de URL de imagem recebido do backend/admin.
@@ -197,6 +205,15 @@ export type CaseDTO = {
   cargo: string
   depoimento: string
   imagemUrl?: string
+  ordem: number
+}
+
+export type ClienteHomeDTO = {
+  id: string
+  nome: string
+  segmento: string
+  descricaoCurta: string
+  logoUrl: string
   ordem: number
 }
 
@@ -448,18 +465,22 @@ type FetchOptions = Omit<RequestInit, 'next'> & {
   revalidate?: number | false
   /** Tags para revalidação on-demand via revalidateTag(). */
   tags?: string[]
+  /** Força leitura sem cache em conteúdo que precisa refletir revogação imediata. */
+  noStore?: boolean
 }
 
 export async function fetchAPI<T>(
   path: string,
-  { revalidate = 0, tags, ...init }: FetchOptions = {},
+  { revalidate = 0, tags, noStore = false, ...init }: FetchOptions = {},
 ): Promise<T> {
-  if (!API_URL) {
+  const apiUrl = getApiUrl()
+
+  if (!apiUrl) {
     throw new Error('NEXT_PUBLIC_API_URL is not configured.')
   }
 
   const cleanPath = path.startsWith('/') ? path : `/${path}`
-  const url = `${API_URL}${cleanPath}`
+  const url = `${apiUrl}${cleanPath}`
 
   const res = await fetch(url, {
     ...init,
@@ -467,7 +488,9 @@ export async function fetchAPI<T>(
       'Content-Type': 'application/json',
       ...init.headers,
     },
-    next: { revalidate, tags },
+    ...(noStore
+      ? { cache: 'no-store' as const }
+      : { next: { revalidate, tags } }),
   })
 
   if (!res.ok) {
@@ -533,6 +556,13 @@ export const api = {
   cases: () =>
     fetchAPI<CaseDTO[]>('/cases', { tags: ['cases'] }),
 
+  homeClientes: (signal?: AbortSignal) =>
+    fetchAPI<ClienteHomeDTO[]>('/home-clientes', {
+      revalidate: 0,
+      noStore: true,
+      signal,
+    }),
+
   faq: () =>
     fetchAPI<FaqDTO[]>('/faq', { tags: ['faq'] }),
 
@@ -561,8 +591,12 @@ export const api = {
   politica: (slug: string) =>
     fetchAPI<PoliticaDTO>(`/politicas/${encodeURIComponent(slug)}`, { tags: ['politica'] }),
 
-  secaoHome: (secao: string) =>
-    fetchAPI<SecaoHomeDTO>(`/secoes-home/${encodeURIComponent(secao)}`, { tags: ['secoes-home'] }),
+  secaoHome: (secao: string, signal?: AbortSignal, noStore = false) =>
+    fetchAPI<SecaoHomeDTO>(`/secoes-home/${encodeURIComponent(secao)}`, {
+      tags: ['secoes-home'],
+      signal,
+      noStore,
+    }),
 
   // Seções da Home
   heroCarousel: () =>

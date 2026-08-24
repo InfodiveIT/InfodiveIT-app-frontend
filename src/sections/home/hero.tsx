@@ -31,9 +31,9 @@ import dynamic from "next/dynamic";
 const DashboardCarousel = dynamic(() => import("@/components/dashboard-carousel").then((mod) => mod.DashboardCarousel), {
   ssr: false,
 });
-import tela1 from "@/assets/telasCarrosselHero/tela-1.webp";
-import tela2 from "@/assets/telasCarrosselHero/tela-2.webp";
-import tela3 from "@/assets/telasCarrosselHero/tela-3.webp";
+import tela1 from "@/assets/telas-carrossel-hero/tela-1.webp";
+import tela2 from "@/assets/telas-carrossel-hero/tela-2.webp";
+import tela3 from "@/assets/telas-carrossel-hero/tela-3.webp";
 
 import { api } from "@/lib/api";
 import { useEffect } from "react";

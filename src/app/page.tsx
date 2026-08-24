@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import Cases from '@/sections/home/cases'
+import Clients from '@/sections/home/clients'
 import { Hero } from '@/sections/home/hero'
 import { Products } from '@/sections/home/products'
 import { Solutions } from '@/sections/home/solutions'
@@ -72,6 +74,9 @@ export default function HomePage() {
         <Products />
         <Problems />
         <Cases />
+        <Suspense fallback={null}>
+          <Clients />
+        </Suspense>
         <TrustPoints />
         <Blog />
         <FAQ />
