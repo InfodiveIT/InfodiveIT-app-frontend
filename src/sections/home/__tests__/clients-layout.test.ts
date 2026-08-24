@@ -6,16 +6,16 @@ describe('getClientSlots', () => {
   })
 
   it.each([7, 9, 11])('usa o slot inferior central para a quantidade ímpar %i', (count) => {
-    expect(getClientSlots(count).at(-1)).toMatchObject({ x: 50, y: 88 })
+    expect(getClientSlots(count).at(-1)).toMatchObject({ x: 50, y: 80 })
   })
 
-  it('mantém os três slots superiores abaixo do cabeçalho', () => {
+  it('mantém os slots superiores em posições harmônicas', () => {
     const slots = getClientSlots(12)
 
-    expect([slots[6], slots[9], slots[11]]).toEqual([
-      { x: 38, y: 32, scale: 0.82, rotation: 1 },
-      { x: 92, y: 32, scale: 0.78, rotation: 2 },
-      { x: 62, y: 32, scale: 0.76, rotation: 1.5 },
+    expect([slots[6], slots[8], slots[10]]).toEqual([
+      { x: 44, y: 26, scale: 0.9, rotation: 0.5 },
+      { x: 56, y: 26, scale: 0.9, rotation: -0.5 },
+      { x: 20, y: 36, scale: 0.88, rotation: -1 },
     ])
   })
 

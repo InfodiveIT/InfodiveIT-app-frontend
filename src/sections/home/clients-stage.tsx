@@ -134,7 +134,7 @@ function LogoCard({
   return (
     <li
       data-client-card
-      className="home-client-card relative z-10 min-h-[104px] min-w-0 lg:absolute lg:h-[clamp(76px,8vw,112px)] lg:w-[clamp(132px,13vw,210px)]"
+      className="home-client-card relative z-10 min-h-[64px] min-w-0 sm:min-h-[72px] lg:absolute lg:h-[clamp(50px,4.5vw,66px)] lg:w-[clamp(100px,8.5vw,136px)]"
       style={slotStyle}
     >
       <button
@@ -150,12 +150,12 @@ function LogoCard({
             : () => interactionReady && onOpenChange(!open),
         })}
         className={cn(
-          'group relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.055] px-4 py-5 shadow-[0_18px_60px_-28px_rgba(0,0,0,0.95)] outline-none backdrop-blur-md transition-[border-color,background-color,box-shadow,filter,opacity,transform] duration-300',
-          'hover:border-brand-accent/55 hover:bg-white/[0.94] focus-visible:border-brand-accent focus-visible:bg-white/[0.94] focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950',
+          'group relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 shadow-[0_10px_25px_-12px_rgba(0,0,0,0.7)] outline-none backdrop-blur-md transition-[border-color,background-color,box-shadow,filter,opacity,transform] duration-200',
+          'hover:border-brand-accent/50 hover:bg-white/[0.08] hover:shadow-[0_12px_30px_-10px_rgba(14,102,255,0.3)] focus-visible:border-brand-accent focus-visible:ring-2 focus-visible:ring-brand-accent',
           !interactionReady && 'pointer-events-none',
           open &&
-            'z-30 -translate-y-1 border-brand-accent/70 bg-white/[0.94] shadow-[0_24px_70px_-25px_rgba(14,102,255,0.75)]',
-          anotherOpen && 'opacity-35 saturate-50',
+            'z-30 -translate-y-0.5 border-brand-accent/70 bg-white/[0.1] shadow-[0_14px_40px_-15px_rgba(14,102,255,0.5)]',
+          anotherOpen && 'opacity-30 saturate-50',
         )}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- Logos validadas ficam no navegador e não passam pelo otimizador remoto do Next.js. */}
@@ -169,10 +169,10 @@ function LogoCard({
           referrerPolicy="no-referrer"
           onError={onImageError}
           className={cn(
-            'h-full max-h-[72px] w-full object-contain brightness-0 grayscale invert transition-[filter,opacity,transform] duration-300',
+            'h-full max-h-[30px] w-full object-contain brightness-0 invert opacity-75 transition-[filter,opacity,transform] duration-200 sm:max-h-[34px] lg:max-h-[34px]',
             open
-              ? 'scale-[1.04] opacity-100 brightness-100 grayscale-0 invert-0'
-              : 'opacity-80 group-hover:opacity-100 group-hover:brightness-100 group-hover:grayscale-0 group-hover:invert-0 group-focus-visible:opacity-100 group-focus-visible:brightness-100 group-focus-visible:grayscale-0 group-focus-visible:invert-0',
+              ? 'scale-[1.04] opacity-100'
+              : 'group-hover:opacity-100 group-hover:scale-[1.04] group-focus-visible:opacity-100',
           )}
         />
       </button>
@@ -183,7 +183,7 @@ function LogoCard({
             ref={refs.setFloating}
             style={floatingStyles}
             {...getFloatingProps()}
-            className="z-[100] w-[min(300px,calc(100vw-32px))] rounded-xl border border-white/15 bg-ink-900/95 p-4 text-left shadow-2xl backdrop-blur-xl"
+            className="z-[100] w-[min(260px,calc(100vw-32px))] rounded-xl border border-white/15 bg-ink-950/95 p-3.5 text-left shadow-2xl backdrop-blur-xl"
           >
             <p className="text-sm font-semibold text-white">{client.nome}</p>
             <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
@@ -284,7 +284,7 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
     const context = gsap.context(() => {
       gsap.set(cards, {
         left: '50%',
-        top: '54%',
+        top: '53%',
         xPercent: -50,
         yPercent: -50,
         scale: 0.72,
@@ -296,9 +296,9 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
         scrollTrigger: {
           trigger: rootRef.current,
           start: 'top top',
-          end: () => `+=${Math.round(window.innerHeight * 1.2)}`,
+          end: () => `+=${Math.round(window.innerHeight * 0.75)}`,
           pin: stageRef.current,
-          scrub: 1,
+          scrub: 0.6,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
@@ -322,22 +322,22 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
             scale: slot.scale,
             rotation: slot.rotation,
             opacity: 1,
-            duration: 0.57,
-            ease: 'none',
+            duration: 0.5,
+            ease: 'power1.out',
           },
-          0.08,
+          0.04,
         )
       })
 
-      timeline.to(cards, { duration: 0.05, ease: 'power1.out' }, 0.65)
-      timeline.to({}, { duration: 0.3 }, 0.7)
+      timeline.to(cards, { duration: 0.05, ease: 'power1.out' }, 0.6)
+      timeline.to({}, { duration: 0.25 }, 0.7)
 
       if (wordmarkRef.current) {
         timeline.fromTo(
           wordmarkRef.current,
-          { scale: 0.94, opacity: 0.78 },
-          { scale: 1, opacity: 1, duration: 0.62, ease: 'none' },
-          0.08,
+          { scale: 0.94, opacity: 0.8 },
+          { scale: 1, opacity: 1, duration: 0.55, ease: 'none' },
+          0.04,
         )
       }
     }, rootRef)
@@ -374,15 +374,15 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
     >
       <div
         ref={stageRef}
-        className="relative min-h-[100svh] overflow-clip px-5 py-20 sm:px-8 lg:h-[100svh] lg:min-h-[640px] lg:px-0 lg:py-0"
+        className="relative min-h-[100svh] overflow-clip px-5 py-20 sm:px-8 lg:h-[100svh] lg:min-h-[600px] lg:px-0 lg:py-0"
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px),radial-gradient(circle_at_50%_48%,rgba(14,102,255,0.18),transparent_42%)] [background-size:48px_48px,48px_48px,100%_100%]"
+          className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px),radial-gradient(circle_at_50%_48%,rgba(14,102,255,0.14),transparent_40%)] [background-size:48px_48px,48px_48px,100%_100%]"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/45 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/45 to-transparent"
         />
 
         <header className="relative z-40 mx-auto max-w-3xl text-center lg:absolute lg:left-1/2 lg:top-[6%] lg:w-full lg:-translate-x-1/2">
@@ -391,31 +391,31 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
           </p>
           <h2
             id="clientes-heading"
-            className="mt-3 text-balance text-3xl font-semibold tracking-[-0.035em] text-white sm:text-4xl lg:text-[clamp(2rem,3.1vw,3.25rem)]"
+            className="mt-2.5 text-balance text-2xl font-semibold tracking-[-0.035em] text-white sm:text-3xl lg:text-[clamp(1.85rem,2.8vw,2.75rem)]"
           >
             {headline}
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-pretty text-sm font-light leading-relaxed text-ink-300 sm:text-base">
+          <p className="mx-auto mt-3 max-w-2xl text-pretty text-xs font-light leading-relaxed text-ink-300 sm:text-sm">
             {subtitle}
           </p>
         </header>
 
         <div
           ref={wordmarkRef}
-          className="relative z-30 mx-auto mb-10 mt-12 flex w-[min(68vw,290px)] items-center justify-center rounded-2xl border border-white/10 bg-black/25 px-6 py-5 shadow-[0_25px_90px_-35px_rgba(14,102,255,0.75)] backdrop-blur-xl lg:absolute lg:left-1/2 lg:top-[52%] lg:m-0 lg:w-[clamp(230px,21vw,330px)] lg:-translate-x-1/2 lg:-translate-y-1/2"
+          className="relative z-30 mx-auto mb-8 mt-10 flex w-[min(50vw,190px)] items-center justify-center rounded-xl border border-white/10 bg-black/40 px-4 py-3 shadow-[0_20px_50px_-20px_rgba(14,102,255,0.4)] backdrop-blur-xl lg:absolute lg:left-1/2 lg:top-[53%] lg:m-0 lg:w-[clamp(160px,14vw,210px)] lg:-translate-x-1/2 lg:-translate-y-1/2"
         >
           <Image
             src={infodiveWordmark}
             alt="Infodive IT"
             priority={false}
-            sizes="(min-width: 1024px) 330px, 290px"
+            sizes="(min-width: 1024px) 210px, 190px"
             className="h-auto w-full object-contain"
           />
         </div>
 
         <ul
           aria-label="Clientes da Infodive"
-          className="relative z-20 mx-auto grid max-w-3xl grid-cols-2 gap-3 md:grid-cols-3 lg:absolute lg:inset-0 lg:block lg:max-w-none"
+          className="relative z-20 mx-auto grid max-w-2xl grid-cols-2 gap-2.5 sm:grid-cols-3 lg:absolute lg:inset-0 lg:block lg:max-w-none"
         >
           {visibleClients.map((client, index) => (
             <LogoCard
@@ -441,20 +441,20 @@ export function ClientsStage({ clients, eyebrow, headline, subtitle }: ClientsSt
             role="region"
             aria-label="Detalhes do cliente selecionado"
             aria-live="polite"
-            className="relative z-30 mx-auto mt-6 min-h-[132px] max-w-2xl rounded-xl border border-white/10 bg-white/[0.055] p-5 text-center backdrop-blur-md lg:hidden"
+            className="relative z-30 mx-auto mt-6 min-h-[110px] max-w-xl rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center backdrop-blur-md lg:hidden"
           >
             {selectedClient ? (
               <>
-                <p className="text-base font-semibold text-white">{selectedClient.nome}</p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
+                <p className="text-sm font-semibold text-white">{selectedClient.nome}</p>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-brand-accent">
                   {selectedClient.segmento}
                 </p>
-                <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-ink-300">
+                <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-ink-300">
                   {selectedClient.descricaoCurta}
                 </p>
               </>
             ) : (
-              <p className="flex min-h-[90px] items-center justify-center text-sm text-ink-300">
+              <p className="flex min-h-[70px] items-center justify-center text-xs text-ink-300">
                 Toque em uma marca para conhecer
               </p>
             )}
