@@ -153,11 +153,11 @@ function MarqueeLogoItem({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: placement === 'bottom' ? -4 : 4, scale: 0.98 }}
                 transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                className="w-[min(300px,calc(100vw-32px))] rounded-xl border border-white/12 bg-ink-950/95 p-3.5 text-left shadow-[0_12px_36px_rgba(0,0,0,0.85)] backdrop-blur-2xl"
+                className="w-[min(280px,calc(100vw-32px))] rounded-xl border border-white/[0.06] bg-ink-900/95 p-3 text-left shadow-[0_12px_32px_rgba(0,0,0,0.75)] backdrop-blur-xl"
               >
-                <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+                <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] pb-2">
                   <p className="text-xs font-semibold text-white tracking-normal">{client.nome}</p>
-                  <span className="rounded bg-brand-accent/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand-accent border border-brand-accent/20">
+                  <span className="rounded bg-brand/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand-accent">
                     {client.segmento}
                   </span>
                 </div>
@@ -320,13 +320,13 @@ export function ClientsStage({
             role="region"
             aria-label="Detalhes do cliente selecionado"
             aria-live="polite"
-            className="relative z-30 mx-auto min-h-[90px] w-full max-w-md rounded-xl border border-white/10 bg-ink-900/90 p-4 text-center backdrop-blur-xl"
+            className="relative z-30 mx-auto min-h-[90px] w-full max-w-md rounded-xl border border-white/[0.06] bg-ink-900/90 p-4 text-center backdrop-blur-xl"
           >
             {selectedMobileClient ? (
               <>
                 <div className="flex items-center justify-center gap-2">
                   <p className="text-sm font-semibold text-white">{selectedMobileClient.nome}</p>
-                  <span className="rounded bg-brand-accent/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand-accent border border-brand-accent/25">
+                  <span className="rounded bg-brand/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand-accent">
                     {selectedMobileClient.segmento}
                   </span>
                 </div>
