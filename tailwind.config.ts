@@ -48,15 +48,20 @@ const config: Config = {
         container: '1280px',
       },
       animation: {
-        'marquee': 'marquee 40s linear infinite',
+        'marquee': 'marquee var(--marquee-duration, 35s) linear infinite',
+        'marquee-reverse': 'marquee-reverse var(--marquee-duration, 35s) linear infinite',
         'orbit': 'orbit calc(var(--duration)*1s) linear infinite',
         'aurora': 'aurora 8s ease-in-out infinite alternate',
         'shine': 'shine 14s linear infinite',
       },
       keyframes: {
         marquee: {
-          '0%': { transform: 'translateX(0)' },
+          '0%': { transform: 'translateX(0%)' },
           '100%': { transform: 'translateX(-50%)' },
+        },
+        'marquee-reverse': {
+          '0%': { transform: 'translateX(-50%)' },
+          '100%': { transform: 'translateX(0%)' },
         },
         aurora: {
           '0%': { backgroundPosition: '0% 50%' },
