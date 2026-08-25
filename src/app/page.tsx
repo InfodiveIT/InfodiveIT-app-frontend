@@ -74,9 +74,6 @@ export default function HomePage() {
         <Products />
         <Problems />
         <Cases />
-        <Suspense fallback={null}>
-          <Clients />
-        </Suspense>
         <TrustPoints />
         <Blog />
         <FAQ />
