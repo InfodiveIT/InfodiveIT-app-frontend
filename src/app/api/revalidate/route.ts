@@ -31,6 +31,26 @@ const RESOURCE_TAG_MAP: Record<string, string> = {
 
 export async function POST(request: Request) {
   try {
+    const secret = process.env.REVALIDATE_SECRET;
+    const authHeader = request.headers.get('authorization');
+    const secretHeader = request.headers.get('x-revalidate-secret');
+    const url = new URL(request.url);
+    const secretParam = url.searchParams.get('secret');
+
+    if (secret) {
+      const isValid =
+        secretHeader === secret ||
+        secretParam === secret ||
+        authHeader === `Bearer ${secret}`;
+
+      if (!isValid) {
+        return NextResponse.json(
+          { message: 'Invalid revalidation secret' },
+          { status: 401 }
+        );
+      }
+    }
+
     const body = await request.json().catch(() => ({}));
     const { resource, tag, path } = body;
 

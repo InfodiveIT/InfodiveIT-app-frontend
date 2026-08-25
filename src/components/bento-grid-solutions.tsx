@@ -325,35 +325,48 @@ const features = [
   },
 ]
 
-export function BentoGridSolutions() {
-  const [marqueeEvents, setMarqueeEvents] = React.useState<any[]>(securityEvents)
-  const [bentoData, setBentoData] = React.useState<any>(null)
+export type BentoGridSolutionsProps = {
+  initialMarqueeEvents?: any[]
+  initialBentoData?: any[]
+}
+
+export function BentoGridSolutions({ initialMarqueeEvents, initialBentoData }: BentoGridSolutionsProps = {}) {
+  const [marqueeEvents, setMarqueeEvents] = React.useState<any[]>(
+    initialMarqueeEvents && initialMarqueeEvents.length > 0 ? initialMarqueeEvents : securityEvents
+  )
+  const [bentoData, setBentoData] = React.useState<any>(initialBentoData ?? null)
 
   React.useEffect(() => {
-    api.homeSegurancaMarquee()
-      .then((data) => {
-        if (data && data.length > 0) {
-          const sorted = [...data].sort((a, b) => a.ordem - b.ordem);
-          setMarqueeEvents(sorted.map((item) => {
-            const IconComponent = SECURITY_ICON_MAP[item.icone || ""] || ShieldCheck;
-            return {
-              Icon: IconComponent,
-              title: item.titulo,
-              body: item.corpo,
-            };
-          }));
-        }
-      })
-      .catch(() => { /* fallback */ });
+    if (initialMarqueeEvents && initialBentoData) return;
 
-    api.homeSolucoesBento()
-      .then((data) => {
-        if (data && data.length > 0) {
-          setBentoData(data);
-        }
-      })
-      .catch(() => { /* fallback */ });
-  }, [])
+    if (!initialMarqueeEvents) {
+      api.homeSegurancaMarquee()
+        .then((data) => {
+          if (data && data.length > 0) {
+            const sorted = [...data].sort((a, b) => a.ordem - b.ordem);
+            setMarqueeEvents(sorted.map((item) => {
+              const IconComponent = SECURITY_ICON_MAP[item.icone || ""] || ShieldCheck;
+              return {
+                Icon: IconComponent,
+                title: item.titulo,
+                body: item.corpo,
+              };
+            }));
+          }
+        })
+        .catch(() => { /* fallback */ });
+    }
+
+    if (!initialBentoData) {
+      api.homeSolucoesBento()
+        .then((data) => {
+          if (data && data.length > 0) {
+            setBentoData(data);
+          }
+        })
+        .catch(() => { /* fallback */ });
+    }
+  }, [initialMarqueeEvents, initialBentoData])
 
   const dynamicFeatures = React.useMemo(() => {
     if (!bentoData || bentoData.length === 0) {

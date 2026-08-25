@@ -461,7 +461,7 @@ export type SobreCulturaDTO = {
 // ─── Infraestrutura HTTP ──────────────────────────────────────────────────────
 
 type FetchOptions = Omit<RequestInit, 'next'> & {
-  /** Tempo de revalidação em segundos. Default 0 para atualização instantânea. */
+  /** Tempo de revalidação em segundos. Default 600s (10 min). */
   revalidate?: number | false
   /** Tags para revalidação on-demand via revalidateTag(). */
   tags?: string[]
@@ -471,7 +471,7 @@ type FetchOptions = Omit<RequestInit, 'next'> & {
 
 export async function fetchAPI<T>(
   path: string,
-  { revalidate = 0, tags, noStore = false, ...init }: FetchOptions = {},
+  { revalidate = 600, tags, noStore = false, ...init }: FetchOptions = {},
 ): Promise<T> {
   const apiUrl = getApiUrl()
 
@@ -482,12 +482,16 @@ export async function fetchAPI<T>(
   const cleanPath = path.startsWith('/') ? path : `/${path}`
   const url = `${apiUrl}${cleanPath}`
 
+  // Apenas envia Content-Type quando houver corpo (POST/PUT/PATCH) ou se explicitamente configurado,
+  // evitando preflight CORS (OPTIONS) desnecessário em requisições GET/HEAD simples.
+  const headers = new Headers(init.headers)
+  if (init.body != null && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
+
   const res = await fetch(url, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...init.headers,
-    },
+    headers,
     ...(noStore
       ? { cache: 'no-store' as const }
       : { next: { revalidate, tags } }),
@@ -513,126 +517,127 @@ function buildQuery(params?: Record<string, string | number | boolean | undefine
 // ─── Métodos da API ───────────────────────────────────────────────────────────
 
 export const api = {
-  // Conteúdo dinâmico
+  // Conteúdo dinâmico (com tags ISR para revalidação on-demand)
   categorias: () =>
-    fetchAPI<CategoriaDTO[]>('/categorias', { tags: ['categorias'] }),
+    fetchAPI<CategoriaDTO[]>('/categorias', { tags: ['categorias'], revalidate: 600 }),
 
   categoria: (slug: string) =>
-    fetchAPI<CategoriaDTO>(`/categorias/${encodeURIComponent(slug)}`, { tags: ['categorias'] }),
+    fetchAPI<CategoriaDTO>(`/categorias/${encodeURIComponent(slug)}`, { tags: ['categorias'], revalidate: 600 }),
 
   solucoes: () =>
-    fetchAPI<SolucaoDTO[]>('/solucoes', { tags: ['solucoes'] }),
+    fetchAPI<SolucaoDTO[]>('/solucoes', { tags: ['solucoes'], revalidate: 600 }),
 
   solucao: (slug: string) =>
-    fetchAPI<SolucaoDTO>(`/solucoes/${encodeURIComponent(slug)}`, { tags: ['solucoes'] }),
+    fetchAPI<SolucaoDTO>(`/solucoes/${encodeURIComponent(slug)}`, { tags: ['solucoes'], revalidate: 600 }),
 
   produtos: (params?: { categoria?: string; fabricante?: string; destaque?: boolean; novidade?: boolean; page?: number; size?: number }) =>
-    fetchAPI<SpringPageResponse<ProdutoResumoDTO>>(`/produtos${buildQuery(params)}`, { tags: ['produtos'] }),
+    fetchAPI<SpringPageResponse<ProdutoResumoDTO>>(`/produtos${buildQuery(params)}`, { tags: ['produtos'], revalidate: 300 }),
 
   produtoNovidade: () =>
-    fetchAPI<ProdutoResumoDTO | null>('/produtos/novidade', { tags: ['produtos'] }).catch(() => null),
+    fetchAPI<ProdutoResumoDTO | null>('/produtos/novidade', { tags: ['produtos'], revalidate: 300 }).catch(() => null),
 
   produto: (slug: string) =>
-    fetchAPI<ProdutoDTO>(`/produtos/${encodeURIComponent(slug)}`, { tags: ['produtos'] }),
+    fetchAPI<ProdutoDTO>(`/produtos/${encodeURIComponent(slug)}`, { tags: ['produtos'], revalidate: 300 }),
 
   fabricantes: (params?: { destaque?: boolean }) =>
-    fetchAPI<FabricanteDTO[]>(`/fabricantes${buildQuery(params)}`, { tags: ['fabricantes'] }),
+    fetchAPI<FabricanteDTO[]>(`/fabricantes${buildQuery(params)}`, { tags: ['fabricantes'], revalidate: 600 }),
 
   fabricante: (slug: string) =>
-    fetchAPI<FabricanteDTO>(`/fabricantes/${encodeURIComponent(slug)}`, { tags: ['fabricantes'] }),
+    fetchAPI<FabricanteDTO>(`/fabricantes/${encodeURIComponent(slug)}`, { tags: ['fabricantes'], revalidate: 600 }),
 
   servicos: () =>
-    fetchAPI<ServicoDTO[]>('/servicos', { tags: ['servicos'] }),
+    fetchAPI<ServicoDTO[]>('/servicos', { tags: ['servicos'], revalidate: 600 }),
 
   servico: (slug: string) =>
-    fetchAPI<ServicoDTO>(`/servicos/${encodeURIComponent(slug)}`, { tags: ['servicos'] }),
+    fetchAPI<ServicoDTO>(`/servicos/${encodeURIComponent(slug)}`, { tags: ['servicos'], revalidate: 600 }),
 
   conteudos: (params?: { tipo?: ConteudoDTO['tipo']; origem?: ConteudoDTO['origem']; destaque?: boolean; page?: number; size?: number }) =>
-    fetchAPI<SpringPageResponse<ConteudoDTO>>(`/conteudos${buildQuery(params)}`, { tags: ['conteudos'] }),
+    fetchAPI<SpringPageResponse<ConteudoDTO>>(`/conteudos${buildQuery(params)}`, { tags: ['conteudos'], revalidate: 300 }),
 
   conteudo: (slug: string) =>
-    fetchAPI<ConteudoDTO>(`/conteudos/${encodeURIComponent(slug)}`, { tags: ['conteudos'] }),
+    fetchAPI<ConteudoDTO>(`/conteudos/${encodeURIComponent(slug)}`, { tags: ['conteudos'], revalidate: 300 }),
 
   cases: () =>
-    fetchAPI<CaseDTO[]>('/cases', { tags: ['cases'] }),
+    fetchAPI<CaseDTO[]>('/cases', { tags: ['cases'], revalidate: 600 }),
 
   homeClientes: (signal?: AbortSignal) =>
     fetchAPI<ClienteHomeDTO[]>('/home-clientes', {
-      revalidate: 0,
-      noStore: true,
+      tags: ['home-clientes'],
+      revalidate: 600,
       signal,
     }),
 
   faq: () =>
-    fetchAPI<FaqDTO[]>('/faq', { tags: ['faq'] }),
+    fetchAPI<FaqDTO[]>('/faq', { tags: ['faq'], revalidate: 900 }),
 
   // Configuração de página
   paginaHero: (pagina: string) =>
-    fetchAPI<PaginaHeroDTO>(`/paginas-hero/${encodeURIComponent(pagina)}`, { tags: ['pagina-hero'] }),
+    fetchAPI<PaginaHeroDTO>(`/paginas-hero/${encodeURIComponent(pagina)}`, { tags: ['pagina-hero'], revalidate: 600 }),
 
   cta: (pagina: string) =>
-    fetchAPI<CtaDTO>(`/ctas/${encodeURIComponent(pagina)}`, { tags: ['ctas'] }),
+    fetchAPI<CtaDTO>(`/ctas/${encodeURIComponent(pagina)}`, { tags: ['ctas'], revalidate: 600 }),
 
   configFooter: () =>
-    fetchAPI<ConfigFooterDTO>('/config-footer', { tags: ['config-footer'] }),
+    fetchAPI<ConfigFooterDTO>('/config-footer', { tags: ['config-footer'], revalidate: 900 }),
 
   configBlog: () =>
-    fetchAPI<ConfigBlogDTO>('/config-blog', { tags: ['config-blog'] }),
+    fetchAPI<ConfigBlogDTO>('/config-blog', { tags: ['config-blog'], revalidate: 600 }),
 
   socialPosts: (rede?: 'INSTAGRAM' | 'LINKEDIN') =>
-    fetchAPI<SocialPostDTO[]>(`/social-posts${buildQuery({ rede })}`, { tags: ['social-posts'] }),
+    fetchAPI<SocialPostDTO[]>(`/social-posts${buildQuery({ rede })}`, { tags: ['social-posts'], revalidate: 600 }),
 
   contatoInfo: () =>
-    fetchAPI<ContatoInfoDTO>('/contato-info', { tags: ['contato-info'] }),
+    fetchAPI<ContatoInfoDTO>('/contato-info', { tags: ['contato-info'], revalidate: 900 }),
 
   politicas: () =>
-    fetchAPI<PoliticaDTO[]>('/politicas', { tags: ['politicas'] }),
+    fetchAPI<PoliticaDTO[]>('/politicas', { tags: ['politicas'], revalidate: 3600 }),
 
   politica: (slug: string) =>
-    fetchAPI<PoliticaDTO>(`/politicas/${encodeURIComponent(slug)}`, { tags: ['politica'] }),
+    fetchAPI<PoliticaDTO>(`/politicas/${encodeURIComponent(slug)}`, { tags: ['politica'], revalidate: 3600 }),
 
   secaoHome: (secao: string, signal?: AbortSignal, noStore = false) =>
     fetchAPI<SecaoHomeDTO>(`/secoes-home/${encodeURIComponent(secao)}`, {
       tags: ['secoes-home'],
+      revalidate: 600,
       signal,
       noStore,
     }),
 
   // Seções da Home
   heroCarousel: () =>
-    fetchAPI<HeroCarouselDTO[]>('/hero-carousel', { tags: ['home-hero'] }),
+    fetchAPI<HeroCarouselDTO[]>('/hero-carousel', { tags: ['home-hero'], revalidate: 600 }),
 
   homeSolucoesBento: () =>
-    fetchAPI<HomeSolucoesBentoDTO[]>('/home-solucoes-bento', { tags: ['home-bento'] }),
+    fetchAPI<HomeSolucoesBentoDTO[]>('/home-solucoes-bento', { tags: ['home-bento'], revalidate: 600 }),
 
   homeSegurancaMarquee: () =>
-    fetchAPI<HomeSegurancaMarqueeDTO[]>('/home-seguranca-marquee', { tags: ['home-marquee'] }),
+    fetchAPI<HomeSegurancaMarqueeDTO[]>('/home-seguranca-marquee', { tags: ['home-marquee'], revalidate: 600 }),
 
   homeProblemas: () =>
-    fetchAPI<HomeProblemasDTO[]>('/home-problemas', { tags: ['home-problemas'] }),
+    fetchAPI<HomeProblemasDTO[]>('/home-problemas', { tags: ['home-problemas'], revalidate: 600 }),
 
   homeTrustStats: () =>
-    fetchAPI<HomeTrustStatsDTO[]>('/home-trust-stats', { tags: ['home-trust'] }),
+    fetchAPI<HomeTrustStatsDTO[]>('/home-trust-stats', { tags: ['home-trust'], revalidate: 600 }),
 
   // Seções de Serviços
   servicosEtapas: () =>
-    fetchAPI<ServicosEtapasDTO>('/servicos-etapas', { tags: ['servicos-etapas'] }),
+    fetchAPI<ServicosEtapasDTO>('/servicos-etapas', { tags: ['servicos-etapas'], revalidate: 600 }),
 
   servicosMetodologia: () =>
-    fetchAPI<ServicosMetodologiaDTO>('/servicos-metodologia', { tags: ['servicos-metodologia'] }),
+    fetchAPI<ServicosMetodologiaDTO>('/servicos-metodologia', { tags: ['servicos-metodologia'], revalidate: 600 }),
 
   // Seções Sobre
   sobreNumeros: () =>
-    fetchAPI<SobreNumerosDTO>('/sobre-numeros', { tags: ['sobre-numeros'] }),
+    fetchAPI<SobreNumerosDTO>('/sobre-numeros', { tags: ['sobre-numeros'], revalidate: 600 }),
 
   sobreTimeline: () =>
-    fetchAPI<SobreTimelineDTO>('/sobre-timeline', { tags: ['sobre-timeline'] }),
+    fetchAPI<SobreTimelineDTO>('/sobre-timeline', { tags: ['sobre-timeline'], revalidate: 600 }),
 
   sobreValores: () =>
-    fetchAPI<SobreValoresDTO>('/sobre-valores', { tags: ['sobre-valores'] }),
+    fetchAPI<SobreValoresDTO>('/sobre-valores', { tags: ['sobre-valores'], revalidate: 600 }),
 
   sobreCultura: () =>
-    fetchAPI<SobreCulturaDTO>('/sobre-cultura', { tags: ['sobre-cultura'] }),
+    fetchAPI<SobreCulturaDTO>('/sobre-cultura', { tags: ['sobre-cultura'], revalidate: 600 }),
 
   // Leads (sem cache — sempre fresco)
   enviarLead: (data: {
@@ -648,6 +653,6 @@ export const api = {
     fetchAPI<{ id: string; message: string }>('/leads', {
       method: 'POST',
       body: JSON.stringify(data),
-      revalidate: 0,
+      noStore: true,
     }),
 }

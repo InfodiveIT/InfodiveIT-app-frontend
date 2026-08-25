@@ -18,70 +18,99 @@ import linkedinColorImg from "@/assets/footer/linkedin-colorfull.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export function Footer() {
+export type FooterLinkItem = { nome: string; href: string }
+
+export type FooterProps = {
+  initialConfig?: {
+    urlLinkedin?: string
+    urlInstagram?: string
+    urlFacebook?: string
+    descricaoEmpresa?: string
+  }
+  initialSolucoes?: FooterLinkItem[]
+  initialProdutos?: FooterLinkItem[]
+}
+
+const DEFAULT_SOLUCOES_LIST: FooterLinkItem[] = [
+  { nome: "Infraestrutura", href: "/solucoes/infraestrutura" },
+  { nome: "Segurança Cibernética", href: "/solucoes/seguranca" },
+  { nome: "Cloud & Virtualização", href: "/solucoes/cloud" },
+  { nome: "Inteligência Artificial", href: "/solucoes/inteligencia-artificial" },
+]
+
+const DEFAULT_PRODUTOS_LIST: FooterLinkItem[] = [
+  { nome: "Monitoramento NOC", href: "/produtos" },
+  { nome: "Backup Cloud", href: "/produtos" },
+  { nome: "Firewall Next-Gen", href: "/produtos" },
+  { nome: "Servidores Dedicados", href: "/produtos" },
+]
+
+export function Footer({ initialConfig, initialSolucoes, initialProdutos }: FooterProps = {}) {
   const pathname = usePathname();
   const containerRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
 
-  const [urlLinkedin, setUrlLinkedin] = useState("https://www.linkedin.com/company/infodiveit/posts/?feedView=all");
-  const [urlInstagram, setUrlInstagram] = useState("https://www.instagram.com/infodiveit/");
-  const [urlFacebook, setUrlFacebook] = useState("https://www.facebook.com/InfodiveIt");
-  const [descricaoEmpresa, setDescricaoEmpresa] = useState<string | null>(null);
+  const [urlLinkedin, setUrlLinkedin] = useState(initialConfig?.urlLinkedin || "https://www.linkedin.com/company/infodiveit/posts/?feedView=all");
+  const [urlInstagram, setUrlInstagram] = useState(initialConfig?.urlInstagram || "https://www.instagram.com/infodiveit/");
+  const [urlFacebook, setUrlFacebook] = useState(initialConfig?.urlFacebook || "https://www.facebook.com/InfodiveIt");
+  const [descricaoEmpresa, setDescricaoEmpresa] = useState<string | null>(initialConfig?.descricaoEmpresa || null);
 
-  const [solucoesList, setSolucoesList] = useState<Array<{ nome: string; href: string }>>([
-    { nome: "Infraestrutura", href: "/solucoes/infraestrutura" },
-    { nome: "Segurança Cibernética", href: "/solucoes/seguranca" },
-    { nome: "Cloud & Virtualização", href: "/solucoes/cloud" },
-    { nome: "Inteligência Artificial", href: "/solucoes/inteligencia-artificial" },
-  ]);
+  const [solucoesList, setSolucoesList] = useState<FooterLinkItem[]>(
+    initialSolucoes && initialSolucoes.length > 0 ? initialSolucoes : DEFAULT_SOLUCOES_LIST
+  );
 
-  const [produtosList, setProdutosList] = useState<Array<{ nome: string; href: string }>>([
-    { nome: "Monitoramento NOC", href: "/produtos" },
-    { nome: "Backup Cloud", href: "/produtos" },
-    { nome: "Firewall Next-Gen", href: "/produtos" },
-    { nome: "Servidores Dedicados", href: "/produtos" },
-  ]);
+  const [produtosList, setProdutosList] = useState<FooterLinkItem[]>(
+    initialProdutos && initialProdutos.length > 0 ? initialProdutos : DEFAULT_PRODUTOS_LIST
+  );
 
   useEffect(() => {
-    api.configFooter()
-      .then((data) => {
-        if (data.urlLinkedin) setUrlLinkedin(data.urlLinkedin);
-        if (data.urlInstagram) setUrlInstagram(data.urlInstagram);
-        if (data.urlFacebook) setUrlFacebook(data.urlFacebook);
-        if (data.descricaoEmpresa) setDescricaoEmpresa(data.descricaoEmpresa);
-      })
-      .catch(() => { /* mantém fallback */ });
+    if (initialConfig && initialSolucoes && initialProdutos) return;
 
-    api.solucoes()
-      .then((data) => {
-        if (data && data.length > 0) {
-          const first4 = [...data]
-            .filter((s) => s.ativo)
-            .sort((a, b) => a.ordem - b.ordem)
-            .slice(0, 4)
-            .map((s) => ({
-              nome: s.nome,
-              href: `/solucoes/${s.slug}`,
-            }));
-          if (first4.length > 0) {
-            setSolucoesList(first4);
+    if (!initialConfig) {
+      api.configFooter()
+        .then((data) => {
+          if (data.urlLinkedin) setUrlLinkedin(data.urlLinkedin);
+          if (data.urlInstagram) setUrlInstagram(data.urlInstagram);
+          if (data.urlFacebook) setUrlFacebook(data.urlFacebook);
+          if (data.descricaoEmpresa) setDescricaoEmpresa(data.descricaoEmpresa);
+        })
+        .catch(() => { /* mantém fallback */ });
+    }
+
+    if (!initialSolucoes) {
+      api.solucoes()
+        .then((data) => {
+          if (data && data.length > 0) {
+            const first4 = [...data]
+              .filter((s) => s.ativo)
+              .sort((a, b) => a.ordem - b.ordem)
+              .slice(0, 4)
+              .map((s) => ({
+                nome: s.nome,
+                href: `/solucoes/${s.slug}`,
+              }));
+            if (first4.length > 0) {
+              setSolucoesList(first4);
+            }
           }
-        }
-      })
-      .catch(() => { /* mantém fallback */ });
+        })
+        .catch(() => { /* mantém fallback */ });
+    }
 
-    api.produtos({ size: 4 })
-      .then((page) => {
-        if (page && page.content && page.content.length > 0) {
-          const first4 = page.content.slice(0, 4).map((p) => ({
-            nome: p.nome,
-            href: `/produtos/${p.slug}`,
-          }));
-          setProdutosList(first4);
-        }
-      })
-      .catch(() => { /* mantém fallback */ });
-  }, []);
+    if (!initialProdutos) {
+      api.produtos({ size: 4 })
+        .then((page) => {
+          if (page && page.content && page.content.length > 0) {
+            const first4 = page.content.slice(0, 4).map((p) => ({
+              nome: p.nome,
+              href: `/produtos/${p.slug}`,
+            }));
+            setProdutosList(first4);
+          }
+        })
+        .catch(() => { /* mantém fallback */ });
+    }
+  }, [initialConfig, initialSolucoes, initialProdutos]);
 
   // Reveal por parallax — APENAS no desktop (lg+).
   // Recalcula ScrollTrigger sempre que o pathname mudar (ex: ao ir para /sobre)

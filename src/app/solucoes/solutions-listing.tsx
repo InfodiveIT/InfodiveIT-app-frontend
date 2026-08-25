@@ -39,15 +39,32 @@ const FALLBACK_CATEGORY_MAP: Record<string, string[]> = {
   "Inteligência Artificial": ["inteligencia-artificial"],
 };
 
-export function SolutionsListing() {
+export type SolutionsListingProps = {
+  initialSolutions?: Solution[]
+  initialCategories?: string[]
+  initialCategoryList?: CategoriaDTO[]
+  initialCta?: {
+    titulo?: string
+    subtitulo?: string
+    ctaTexto?: string
+    tipoAcao?: string
+  }
+}
+
+export function SolutionsListing({
+  initialSolutions,
+  initialCategories,
+  initialCategoryList,
+  initialCta,
+}: SolutionsListingProps = {}) {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todas");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [solutions, setSolutions] = useState<Solution[]>([]);
-  const [categories, setCategories] = useState<string[]>(["Todas"]);
-  const [categoryList, setCategoryList] = useState<CategoriaDTO[]>([]);
-  const [cta, setCta] = useState<{ titulo?: string; subtitulo?: string; ctaTexto?: string; tipoAcao?: string }>({
+  const [solutions, setSolutions] = useState<Solution[]>(initialSolutions ?? []);
+  const [categories, setCategories] = useState<string[]>(initialCategories ?? ["Todas"]);
+  const [categoryList, setCategoryList] = useState<CategoriaDTO[]>(initialCategoryList ?? []);
+  const [cta, setCta] = useState<{ titulo?: string; subtitulo?: string; ctaTexto?: string; tipoAcao?: string }>(initialCta ?? {
     titulo: "Sua infraestrutura crítica precisa de sustentação?",
     subtitulo: "Fale com nossos arquitetos de soluções. Projetamos, implementamos e sustentamos seu ambiente 24/7 com garantia de SLA.",
     ctaTexto: "Falar com especialista",
@@ -55,61 +72,64 @@ export function SolutionsListing() {
   });
 
   useEffect(() => {
+    if (initialSolutions && initialCategoryList && initialCta) return;
+
     try {
       const cached = localStorage.getItem("infodive_solutions_listing_cache_v1");
       if (cached) {
         const parsed = JSON.parse(cached);
-        if (parsed.solutions && parsed.solutions.length > 0) setSolutions(parsed.solutions);
-        if (parsed.categories && parsed.categories.length > 0) setCategories(parsed.categories);
-        if (parsed.categoryList && parsed.categoryList.length > 0) setCategoryList(parsed.categoryList);
-        if (parsed.cta) setCta(parsed.cta);
+        if (parsed.solutions && parsed.solutions.length > 0 && !initialSolutions) setSolutions(parsed.solutions);
+        if (parsed.categories && parsed.categories.length > 0 && !initialCategories) setCategories(parsed.categories);
+        if (parsed.categoryList && parsed.categoryList.length > 0 && !initialCategoryList) setCategoryList(parsed.categoryList);
+        if (parsed.cta && !initialCta) setCta(parsed.cta);
       }
     } catch {}
 
-    // 0. Fetch CTA
-    api.cta("solucoes")
-      .then((data) => {
-        if (data) {
-          setCta({
-            titulo: data.titulo,
-            subtitulo: data.subtitulo,
-            ctaTexto: data.ctaTexto,
-            tipoAcao: data.tipoAcao,
-          });
-        }
-      })
-      .catch(() => {});
+    Promise.all([
+      api.cta("solucoes").catch(() => null),
+      api.categorias().catch(() => []),
+      api.solucoes().catch(() => []),
+    ]).then(([ctaData, cats, solucoesData]) => {
+      if (ctaData) {
+        setCta({
+          titulo: ctaData.titulo,
+          subtitulo: ctaData.subtitulo,
+          ctaTexto: ctaData.ctaTexto,
+          tipoAcao: ctaData.tipoAcao,
+        });
+      }
 
-    // 1. Fetch categories
-    api.categorias()
-      .then((cats) => {
-        if (cats && cats.length > 0) {
-          const activeCats = cats.filter(c => c.ativo).sort((a, b) => a.ordem - b.ordem);
-          setCategoryList(activeCats);
-          setCategories(["Todas", ...activeCats.map(c => c.nome)]);
-        }
-      })
-      .catch(() => {});
+      let activeCats: CategoriaDTO[] = [];
+      let newCats = ["Todas"];
+      if (cats && cats.length > 0) {
+        activeCats = cats.filter(c => c.ativo).sort((a, b) => a.ordem - b.ordem);
+        newCats = ["Todas", ...activeCats.map(c => c.nome)];
+        setCategoryList(activeCats);
+        setCategories(newCats);
+      }
 
-    // 2. Fetch solutions
-    api.solucoes()
-      .then((data) => {
-        if (data && data.length > 0) {
-          const sorted = [...data].sort((a, b) => a.ordem - b.ordem);
-          const mapped = sorted.map(cat => categoriaToSolution(cat));
-          setSolutions(mapped);
-          try {
-            localStorage.setItem("infodive_solutions_listing_cache_v1", JSON.stringify({
-              solutions: mapped,
-              categories,
-              categoryList,
-              cta,
-            }));
-          } catch {}
-        }
-      })
-      .catch(() => {});
-  }, []);
+      let mappedSolutions: Solution[] = [];
+      if (solucoesData && solucoesData.length > 0) {
+        const sorted = [...solucoesData].sort((a, b) => a.ordem - b.ordem);
+        mappedSolutions = sorted.map(cat => categoriaToSolution(cat));
+        setSolutions(mappedSolutions);
+      }
+
+      try {
+        localStorage.setItem("infodive_solutions_listing_cache_v1", JSON.stringify({
+          solutions: mappedSolutions,
+          categories: newCats,
+          categoryList: activeCats,
+          cta: ctaData ? {
+            titulo: ctaData.titulo,
+            subtitulo: ctaData.subtitulo,
+            ctaTexto: ctaData.ctaTexto,
+            tipoAcao: ctaData.tipoAcao,
+          } : cta,
+        }));
+      } catch {}
+    }).catch(() => {});
+  }, [initialSolutions, initialCategoryList, initialCta]);
 
   // Sync selectedCategory with searchParams (e.g. ?seguranca)
   useEffect(() => {

@@ -92,7 +92,9 @@ function parseMarkdownToBlocos(text?: string): ArtigoBloco[] {
   return blocos;
 }
 
-async function getArtigo(slug: string): Promise<{ artigo: Artigo; rawConteudo?: string; publicadoEmIso: string } | null> {
+import { cache } from "react";
+
+const getArtigo = cache(async (slug: string): Promise<{ artigo: Artigo; rawConteudo?: string; publicadoEmIso: string } | null> => {
   try {
     const dto = await api.conteudo(slug);
     if (!dto || !dto.ativo) return null;
@@ -157,9 +159,9 @@ async function getArtigo(slug: string): Promise<{ artigo: Artigo; rawConteudo?: 
   } catch (e) {
     return null;
   }
-}
+});
 
-async function getRelacionados(currentSlug: string, limit = 3): Promise<Artigo[]> {
+const getRelacionados = cache(async (currentSlug: string, limit = 3): Promise<Artigo[]> => {
   try {
     const page = await api.conteudos({ size: 10 });
     const filtrados = page.content.filter((c) => c.slug !== currentSlug);
@@ -219,11 +221,10 @@ async function getRelacionados(currentSlug: string, limit = 3): Promise<Artigo[]
   } catch (e) {
     return [];
   }
-}
+});
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 export const dynamicParams = true;
+export const revalidate = 300; // 5 minutes ISR cache
 
 export async function generateStaticParams() {
   try {

@@ -3,19 +3,8 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { NumberTicker } from "@/components/ui/number-ticker"
-import { api, type HomeTrustStatsDTO } from "@/lib/api"
-
-type Stat = {
-  eyebrow: string
-  prefix?: string
-  prefixClass?: string
-  suffix?: string
-  suffixClass?: string
-  value: number
-  startValue: number
-  title: string
-  desc: string
-}
+import { api } from "@/lib/api"
+import { trustDtoToStat, type Stat } from "@/lib/converters"
 
 const STATS_FALLBACK: Stat[] = [
   {
@@ -47,30 +36,22 @@ const STATS_FALLBACK: Stat[] = [
   },
 ]
 
-function fromDTO(dto: HomeTrustStatsDTO): Stat {
-  return {
-    eyebrow: dto.eyebrow ?? "",
-    prefix: dto.prefixo,
-    prefixClass: dto.prefixo === "Desde"
-      ? "text-2xl sm:text-3xl font-bold mr-2 text-ink-300"
-      : "text-brand mr-1 font-bold",
-    suffix: dto.sufixo,
-    suffixClass: "text-brand ml-1 font-bold",
-    value: dto.valor,
-    startValue: dto.valorInicial,
-    title: dto.titulo,
-    desc: dto.descricao ?? "",
-  }
+export type TrustPointsProps = {
+  initialStats?: Stat[]
 }
 
-export const TrustPoints = () => {
-  const [stats, setStats] = useState<Stat[]>(STATS_FALLBACK)
+export const TrustPoints = ({ initialStats }: TrustPointsProps = {}) => {
+  const [stats, setStats] = useState<Stat[]>(
+    initialStats && initialStats.length > 0 ? initialStats : STATS_FALLBACK
+  )
 
   useEffect(() => {
+    if (initialStats && initialStats.length > 0) return;
+
     api.homeTrustStats()
-      .then((data) => { if (data.length > 0) setStats(data.map(fromDTO)) })
+      .then((data) => { if (data.length > 0) setStats(data.map(trustDtoToStat)) })
       .catch(() => { /* mantém fallback */ })
-  }, [])
+  }, [initialStats])
 
   return (
     <section className="relative overflow-hidden bg-ink-50 pb-14 pt-8 md:py-16">

@@ -38,7 +38,7 @@ describe("Contact", () => {
     ).toHaveAttribute("href", "mailto:contato@infodive.com.br");
     expect(
       screen.getByRole("link", { name: /3330-0444/ }),
-    ).toHaveAttribute("href", "tel:+551140030000");
+    ).toHaveAttribute("href", "tel:555133300444");
   });
 
   it("renderiza o CTA que abre o formulário de especialista", () => {

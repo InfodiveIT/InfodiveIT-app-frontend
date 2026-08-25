@@ -58,7 +58,7 @@ describe('Clients Server Component', () => {
     expect(mockedApi.secaoHome).toHaveBeenCalledWith(
       'clientes',
       expect.any(AbortSignal),
-      true,
+      false,
     )
     expect(mockedApi.homeClientes).toHaveBeenCalledWith(expect.any(AbortSignal))
   })

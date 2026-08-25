@@ -11,30 +11,55 @@ const GsapMenu = dynamic(() => import("@/components/GsapMenu").then((mod) => mod
   ssr: false,
 });
 
-export function Contact() {
+export type ContactInfoState = {
+  eyebrow: string
+  headline: string
+  headlineDestaque: string
+  subtitulo: string
+  email: string
+  telefone: string
+  endereco: string
+  horarioComercial: string
+  horarioNoc: string
+  cardTitulo: string
+  cardDescricao: string
+  cardBullets: string[]
+  cardCtaTexto: string
+  cardStatus: string
+}
+
+const DEFAULT_CONTACT_INFO: ContactInfoState = {
+  eyebrow: "Contato",
+  headline: "Pronto para evoluir a TI da sua empresa?",
+  headlineDestaque: "TI da sua empresa",
+  subtitulo: "Conecte-se com nossos consultores seniores. Estamos prontos para projetar e implementar soluções de infraestrutura e nuvem sob medida para o seu negócio.",
+  email: "contato@infodive.com.br",
+  telefone: "+55 (51) 3330-0444",
+  endereco: "Av. Cristovão Colombo, 3000 - Sala 704 | Floresta, Porto Alegre - RS",
+  horarioComercial: "Seg a Sex, 9h às 18h",
+  horarioNoc: "Suporte Crítico NOC: 24/7",
+  cardTitulo: "Precisa de ajuda imediata?",
+  cardDescricao: "Fale com nossos engenheiros e receba uma análise rápida dos requisitos de TI, segurança e nuvem do seu negócio.",
+  cardBullets: [
+    "Resposta em até 1 hora",
+    "Diagnóstico inicial sem custo",
+    "Especialistas certificados",
+  ],
+  cardCtaTexto: "Falar com Especialista",
+  cardStatus: "Especialistas online no momento",
+};
+
+export type ContactProps = {
+  initialInfo?: ContactInfoState
+}
+
+export function Contact({ initialInfo }: ContactProps = {}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [info, setInfo] = useState({
-    eyebrow: "Contato",
-    headline: "Pronto para evoluir a TI da sua empresa?",
-    headlineDestaque: "TI da sua empresa",
-    subtitulo: "Conecte-se com nossos consultores seniores. Estamos prontos para projetar e implementar soluções de infraestrutura e nuvem sob medida para o seu negócio.",
-    email: "contato@infodive.com.br",
-    telefone: "+55 (51) 3330-0444",
-    endereco: "Av. Cristovão Colombo, 3000 - Sala 704 | Floresta, Porto Alegre - RS",
-    horarioComercial: "Seg a Sex, 9h às 18h",
-    horarioNoc: "Suporte Crítico NOC: 24/7",
-    cardTitulo: "Precisa de ajuda imediata?",
-    cardDescricao: "Fale com nossos engenheiros e receba uma análise rápida dos requisitos de TI, segurança e nuvem do seu negócio.",
-    cardBullets: [
-      "Resposta em até 1 hora",
-      "Diagnóstico inicial sem custo",
-      "Especialistas certificados",
-    ] as string[],
-    cardCtaTexto: "Falar com Especialista",
-    cardStatus: "Especialistas online no momento",
-  });
+  const [info, setInfo] = useState<ContactInfoState>(initialInfo ?? DEFAULT_CONTACT_INFO);
 
   useEffect(() => {
+    if (initialInfo) return;
+
     api.contatoInfo()
       .then((data) => {
         if (data) {
@@ -72,7 +97,7 @@ export function Contact() {
         }
       })
       .catch(() => { /* fallback */ });
-  }, []);
+  }, [initialInfo]);
 
   return (
     <section id="contact" className="scroll-mt-28 md:scroll-mt-36 relative z-10 bg-white py-20 md:py-28 border-t border-ink-200/60">

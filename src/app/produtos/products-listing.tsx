@@ -27,7 +27,7 @@ import { useEffect } from "react"
 import { api, normalizeImageUrl, type ProdutoResumoDTO } from "@/lib/api"
 import type { Product } from "@/lib/products-data"
 
-function mapDtoToProduct(dto: ProdutoResumoDTO): Product {
+export function mapDtoToProduct(dto: ProdutoResumoDTO): Product {
   return {
     slug: dto.slug,
     nome: dto.nome,
@@ -47,101 +47,113 @@ function mapDtoToProduct(dto: ProdutoResumoDTO): Product {
   }
 }
 
-export function ProductsListing() {
+export type ProductsListingProps = {
+  initialProducts?: Product[]
+  initialFabricantes?: string[]
+  initialStats?: { produtos: number; fabricantes: number; categorias: number }
+  initialCta?: {
+    titulo?: string
+    subtitulo?: string
+    ctaTexto?: string
+    tipoAcao?: string
+  }
+}
+
+export function ProductsListing({
+  initialProducts,
+  initialFabricantes,
+  initialStats,
+  initialCta,
+}: ProductsListingProps = {}) {
+  const [products, setProducts] = useState<Product[]>(initialProducts ?? [])
+  const [fabricantesList, setFabricantesList] = useState<string[]>(initialFabricantes ?? [])
+  const [stats, setStats] = useState(initialStats ?? {
+    produtos: initialProducts?.length ?? 0,
+    fabricantes: initialFabricantes?.length ?? 0,
+    categorias: 0,
+  })
+  const [cta, setCta] = useState(initialCta ?? {
+    titulo: "Não encontrou o que procurava?",
+    subtitulo: "Trabalhamos com os principais fabricantes globais. Converse com nossos especialistas para dimensionar a solução exata para o seu cenário.",
+    ctaTexto: "Falar com Especialista",
+    tipoAcao: "CONTATO",
+  })
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("Todos")
+  const [selectedFabricante, setSelectedFabricante] = useState("Todos")
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   const searchParams = useSearchParams()
   const urlFabricante = searchParams.get("fabricante")
 
-  const initialFabricante = useMemo(() => {
-    if (!urlFabricante) return "Todos"
-    return urlFabricante
-  }, [urlFabricante])
-
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("Todos")
-  const [selectedFabricante, setSelectedFabricante] = useState(initialFabricante)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [products, setProducts] = useState<Product[]>([])
-  const [fabricantesList, setFabricantesList] = useState<string[]>([])
-  const [cta, setCta] = useState<{ titulo?: string; subtitulo?: string; ctaTexto?: string; tipoAcao?: string }>({
-    titulo: "Não achou o que procurava?",
-    subtitulo: "Nosso catálogo vai muito além desta vitrine. Fale com um especialista e encontramos o produto certo — com o melhor fabricante — para o seu desafio.",
-    ctaTexto: "Falar com especialista",
-    tipoAcao: "DRAWER",
-  })
-  const [stats, setStats] = useState({
-    produtos: 0,
-    fabricantes: 0,
-    categorias: 0,
-  })
-
   useEffect(() => {
+    if (initialProducts && initialFabricantes && initialStats && initialCta) return
+
     try {
       const cached = localStorage.getItem("infodive_products_listing_cache_v1")
       if (cached) {
         const parsed = JSON.parse(cached)
-        if (parsed.products && parsed.products.length > 0) setProducts(parsed.products)
-        if (parsed.fabricantesList && parsed.fabricantesList.length > 0) setFabricantesList(parsed.fabricantesList)
-        if (parsed.stats) setStats(parsed.stats)
-        if (parsed.cta) setCta(parsed.cta)
+        if (parsed.products && !initialProducts) setProducts(parsed.products)
+        if (parsed.fabricantesList && !initialFabricantes) setFabricantesList(parsed.fabricantesList)
+        if (parsed.stats && !initialStats) setStats(parsed.stats)
+        if (parsed.cta && !initialCta) setCta(parsed.cta)
       }
     } catch {}
 
-    api.cta("produtos")
-      .then((data) => {
-        if (data) {
-          setCta({
-            titulo: data.titulo,
-            subtitulo: data.subtitulo,
-            ctaTexto: data.ctaTexto,
-            tipoAcao: data.tipoAcao,
-          })
-        }
-      })
-      .catch(() => {})
-
-    api.fabricantes()
-      .then((data) => {
-        if (data && data.length > 0) {
-          setFabricantesList(data.map((f) => f.nome))
-        }
-      })
-      .catch(() => {})
-
-    api.produtos({ size: 100 })
-      .then((page) => {
-        if (page.content.length > 0) {
-          const mapped = page.content.map(mapDtoToProduct)
-          setProducts(mapped)
-          try {
-            localStorage.setItem("infodive_products_listing_cache_v1", JSON.stringify({
-              products: mapped,
-              fabricantesList,
-              stats,
-              cta,
-            }))
-          } catch {}
-        }
-      })
-      .catch(() => {})
-
     Promise.all([
+      api.cta("produtos").catch(() => null),
       api.produtos({ size: 100 }).catch(() => null),
       api.fabricantes().catch(() => null),
       api.categorias().catch(() => null),
-    ])
-      .then(([produtosPage, fabricantes, categorias]) => {
-        const totalProdutos = produtosPage?.totalElements ?? produtosPage?.content?.length ?? 0
-        const totalFabricantes = (fabricantes && fabricantes.length > 0) ? fabricantes.length : 0
-        const totalCategorias = (categorias && categorias.length > 0) ? categorias.filter((c) => c.ativo).length : 0
+    ]).then(([ctaData, produtosPage, fabricantesData, categoriasData]) => {
+      let mappedProducts = products
+      let fabricantesNomes = fabricantesList
 
-        setStats({
-          produtos: totalProdutos,
-          fabricantes: totalFabricantes,
-          categorias: totalCategorias,
+      if (ctaData) {
+        setCta({
+          titulo: ctaData.titulo,
+          subtitulo: ctaData.subtitulo,
+          ctaTexto: ctaData.ctaTexto,
+          tipoAcao: ctaData.tipoAcao,
         })
-      })
-      .catch(() => {})
-  }, [])
+      }
+
+      if (fabricantesData && fabricantesData.length > 0) {
+        fabricantesNomes = fabricantesData.map((f) => f.nome)
+        setFabricantesList(fabricantesNomes)
+      }
+
+      if (produtosPage && produtosPage.content && produtosPage.content.length > 0) {
+        mappedProducts = produtosPage.content.map(mapDtoToProduct)
+        setProducts(mappedProducts)
+      }
+
+      const totalProdutos = produtosPage?.totalElements ?? produtosPage?.content?.length ?? mappedProducts.length
+      const totalFabricantes = fabricantesData && fabricantesData.length > 0 ? fabricantesData.length : fabricantesNomes.length
+      const totalCategorias = categoriasData && categoriasData.length > 0 ? categoriasData.filter((c) => c.ativo).length : 0
+
+      const statsObj = {
+        produtos: totalProdutos,
+        fabricantes: totalFabricantes,
+        categorias: totalCategorias,
+      }
+      setStats(statsObj)
+
+      try {
+        localStorage.setItem("infodive_products_listing_cache_v1", JSON.stringify({
+          products: mappedProducts,
+          fabricantesList: fabricantesNomes,
+          stats: statsObj,
+          cta: ctaData ? {
+            titulo: ctaData.titulo,
+            subtitulo: ctaData.subtitulo,
+            ctaTexto: ctaData.ctaTexto,
+            tipoAcao: ctaData.tipoAcao,
+          } : cta,
+        }))
+      } catch {}
+    }).catch(() => {})
+  }, [initialProducts, initialFabricantes, initialStats, initialCta])
 
   const productCategories = useMemo(() => {
     const cats = Array.from(new Set(products.map((p) => p.categoria).filter(Boolean)))

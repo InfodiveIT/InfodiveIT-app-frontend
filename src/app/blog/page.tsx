@@ -31,6 +31,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const revalidate = 300; // 5 minutes ISR cache
+
 export default function BlogPage() {
   return (
     <>

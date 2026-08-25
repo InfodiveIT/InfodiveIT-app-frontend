@@ -104,30 +104,26 @@ export function useNavbarData() {
       /* ignore storage errors */
     }
 
-    // 2. Buscar dados atualizados da API em background (Stale-While-Revalidate)
+    // 2. Buscar dados agregados via endpoint local same-origin (sem preflight CORS)
     let isMounted = true
 
-    Promise.allSettled([
-      api.categorias(),
-      api.fabricantes({ destaque: true }),
-      api.produtos({ destaque: true, size: 6 }),
-      api.conteudos({ size: 2 }),
-      api.produtoNovidade(),
-    ]).then(([resCat, resFab, resProd, resCont, resNovidade]) => {
-      if (!isMounted) return
+    fetch('/api/navbar-data')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch navbar data')
+        return res.json()
+      })
+      .then((data) => {
+        if (!isMounted || !data) return
 
-      let newCategorias: NavCategoriaItem[] = []
-      let newFabricantes: NavFabricanteItem[] = []
-      let newProdutosDestaque: ProdutoResumoDTO[] = []
-      let newUltimoConteudo: ConteudoDTO | null = null
-      let newUltimosConteudos: ConteudoDTO[] = []
-      let newProdutoNovidade: ProdutoResumoDTO | null = null
+        let newCategorias: NavCategoriaItem[] = []
+        let newFabricantes: NavFabricanteItem[] = []
+        let newProdutosDestaque: ProdutoResumoDTO[] = []
+        let newUltimoConteudo: ConteudoDTO | null = null
+        let newUltimosConteudos: ConteudoDTO[] = []
+        let newProdutoNovidade: ProdutoResumoDTO | null = null
 
-      if (resCat.status === 'fulfilled' && resCat.value.length > 0) {
-        newCategorias = resCat.value
-          .filter((c) => c.ativo)
-          .sort((a, b) => a.ordem - b.ordem)
-          .map((c) => {
+        if (Array.isArray(data.categorias) && data.categorias.length > 0) {
+          newCategorias = data.categorias.map((c: any) => {
             const ui = getUiConfigForSlug(c.slug)
             return {
               nome: c.nome,
@@ -137,61 +133,61 @@ export function useNavbarData() {
               icon: ui.icon,
             }
           })
-        setCategorias(newCategorias)
-      }
+          setCategorias(newCategorias)
+        }
 
-      if (resFab.status === 'fulfilled' && resFab.value.length > 0) {
-        newFabricantes = resFab.value
-          .filter((f) => f.ativo)
-          .sort((a, b) => a.ordem - b.ordem)
-          .map((f) => ({
+        if (Array.isArray(data.fabricantes) && data.fabricantes.length > 0) {
+          newFabricantes = data.fabricantes.map((f: any) => ({
             nome: f.nome,
             descricao: f.descricaoCurta ?? f.descricao ?? '',
             href: `/produtos?fabricante=${encodeURIComponent(f.slug)}`,
           }))
-        setFabricantes(newFabricantes)
-      }
-
-      if (resProd.status === 'fulfilled' && resProd.value.content.length > 0) {
-        newProdutosDestaque = resProd.value.content
-        setProdutosDestaque(newProdutosDestaque)
-      }
-
-      if (resCont.status === 'fulfilled' && resCont.value.content.length > 0) {
-        newUltimosConteudos = resCont.value.content.slice(0, 2)
-        newUltimoConteudo = newUltimosConteudos[0] || null
-        setUltimosConteudos(newUltimosConteudos)
-        setUltimoConteudo(newUltimoConteudo)
-      }
-
-      if (resNovidade.status === 'fulfilled' && resNovidade.value) {
-        newProdutoNovidade = resNovidade.value
-        setProdutoNovidade(newProdutoNovidade)
-      }
-
-      setIsLoading(false)
-
-      // Salvar snapshot no localStorage para navegações futuras
-      try {
-        const cacheToSave: CacheData = {
-          categorias: newCategorias.map((c) => ({
-            nome: c.nome,
-            slug: c.slug,
-            descricao: c.descricao,
-            href: c.href,
-          })),
-          fabricantes: newFabricantes,
-          ultimoConteudo: newUltimoConteudo,
-          ultimosConteudos: newUltimosConteudos,
-          produtosDestaque: newProdutosDestaque,
-          produtoNovidade: newProdutoNovidade,
-          timestamp: Date.now(),
+          setFabricantes(newFabricantes)
         }
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cacheToSave))
-      } catch {
-        /* ignore storage write errors */
-      }
-    })
+
+        if (Array.isArray(data.produtosDestaque) && data.produtosDestaque.length > 0) {
+          newProdutosDestaque = data.produtosDestaque
+          setProdutosDestaque(newProdutosDestaque)
+        }
+
+        if (Array.isArray(data.ultimosConteudos) && data.ultimosConteudos.length > 0) {
+          newUltimosConteudos = data.ultimosConteudos.slice(0, 2)
+          newUltimoConteudo = newUltimosConteudos[0] || null
+          setUltimosConteudos(newUltimosConteudos)
+          setUltimoConteudo(newUltimoConteudo)
+        }
+
+        if (data.produtoNovidade) {
+          newProdutoNovidade = data.produtoNovidade
+          setProdutoNovidade(newProdutoNovidade)
+        }
+
+        setIsLoading(false)
+
+        // Salvar snapshot no localStorage para navegações futuras
+        try {
+          const cacheToSave: CacheData = {
+            categorias: newCategorias.map((c) => ({
+              nome: c.nome,
+              slug: c.slug,
+              descricao: c.descricao,
+              href: c.href,
+            })),
+            fabricantes: newFabricantes,
+            ultimoConteudo: newUltimoConteudo,
+            ultimosConteudos: newUltimosConteudos,
+            produtosDestaque: newProdutosDestaque,
+            produtoNovidade: newProdutoNovidade,
+            timestamp: Date.now(),
+          }
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cacheToSave))
+        } catch {
+          /* ignore storage write errors */
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsLoading(false)
+      })
 
     return () => {
       isMounted = false

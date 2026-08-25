@@ -8,8 +8,19 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 
-export function Solutions() {
-  const [info, setInfo] = useState({
+export type SolutionsProps = {
+  initialInfo?: {
+    eyebrow: string
+    headline: string
+    headlineDestaque: string
+    subtitulo: string
+  }
+  initialMarqueeEvents?: any[]
+  initialBentoData?: any[]
+}
+
+export function Solutions({ initialInfo, initialMarqueeEvents, initialBentoData }: SolutionsProps = {}) {
+  const [info, setInfo] = useState(initialInfo ?? {
     eyebrow: "Soluções",
     headline: "Um portfólio completo para a sua operação crítica",
     headlineDestaque: "portfólio completo",
@@ -17,6 +28,8 @@ export function Solutions() {
   });
 
   useEffect(() => {
+    if (initialInfo) return;
+
     api.secaoHome("solucoes")
       .then((data) => {
         if (data) {
@@ -29,7 +42,7 @@ export function Solutions() {
         }
       })
       .catch(() => { /* fallback */ });
-  }, []);
+  }, [initialInfo]);
 
   return (
     <section id="solutions" className="relative bg-white py-20 md:py-28">
@@ -77,7 +90,10 @@ export function Solutions() {
           </Link>
         </Reveal>
         <Reveal delay={0.1} className="mt-10">
-          <BentoGridSolutions />
+          <BentoGridSolutions
+            initialMarqueeEvents={initialMarqueeEvents}
+            initialBentoData={initialBentoData}
+          />
         </Reveal>
       </div>
     </section>

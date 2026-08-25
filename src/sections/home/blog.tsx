@@ -13,28 +13,19 @@ import peopleImg from "@/assets/blog/people.png";
 import cloudImg from "@/assets/blog/cloud.png";
 import presentationImg from "@/assets/blog/presentation.png";
 
-type ContentItem = {
-  id: string;
-  titulo: string;
-  slug: string;
-  tipo: ConteudoDTO['tipo'];
-  descricao?: string;
-  publicadoEm?: string;
-  tempoLeitura: string;
-  categoria: string;
-  imagem: any;
+import { dtoToBlogItem, type ContentItem } from "@/lib/converters"
+
+export type BlogProps = {
+  initialItems?: ContentItem[];
 };
 
-
-// Imagens e categorias de apresentação (UI) ciclicamente atribuídas aos cards.
-const defaultImages = [peopleImg, cloudImg, presentationImg];
-const defaultCategories = ["IA", "NUVEM", "IA"];
-
-export function Blog() {
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+export function Blog({ initialItems }: BlogProps = {}) {
+  const [items, setItems] = useState<ContentItem[]>(initialItems ?? []);
+  const [isLoaded, setIsLoaded] = useState(Boolean(initialItems));
 
   useEffect(() => {
+    if (initialItems) return;
+
     let active = true;
 
     api
@@ -44,23 +35,7 @@ export function Blog() {
           if (res && res.content && res.content.length > 0) {
             const formatted = res.content
               .slice(0, 3)
-              .map((item: ConteudoDTO, idx: number) => ({
-                id: item.id,
-                titulo: item.titulo,
-                slug: item.slug,
-                tipo: item.tipo,
-                descricao: item.descricao || "",
-                publicadoEm: item.publicadoEm
-                  ? new Date(item.publicadoEm).toLocaleDateString("pt-BR", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
-                  : "01 jun 2026",
-                tempoLeitura: item.tempoLeitura || `${Math.max(3, Math.round((item.conteudo?.split(" ").length || 200) / 200))} min read`,
-                categoria: defaultCategories[idx % 3],
-                imagem: (item as any).imagemCapaUrl || (item as any).imagemUrl || defaultImages[idx % 3],
-              }));
+              .map(dtoToBlogItem);
             setItems(formatted);
           } else {
             setItems([]);
@@ -78,7 +53,7 @@ export function Blog() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialItems]);
 
   if (isLoaded && items.length === 0) return null;
 

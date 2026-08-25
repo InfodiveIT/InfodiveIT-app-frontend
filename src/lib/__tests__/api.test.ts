@@ -24,7 +24,7 @@ describe("api", () => {
       );
     });
 
-    it("inclui header Content-Type: application/json", async () => {
+    it("não inclui header Content-Type em requisições GET sem body", async () => {
       const mockResponse = { content: [] };
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -36,7 +36,7 @@ describe("api", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          headers: expect.objectContaining({
+          headers: expect.not.objectContaining({
             "Content-Type": "application/json",
           }),
         }),
@@ -68,7 +68,7 @@ describe("api", () => {
       expect(result).toEqual(mockData);
     });
 
-    it("usa next: { revalidate: 3600 } por padrão", async () => {
+    it("usa next: { revalidate: 300 } para conteudos", async () => {
       const mockResponse = { content: [] };
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -80,7 +80,7 @@ describe("api", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          next: expect.objectContaining({ revalidate: 3600 }),
+          next: expect.objectContaining({ revalidate: 300 }),
         }),
       );
     });
@@ -220,7 +220,7 @@ describe("api", () => {
   });
 
   describe("homeClientes()", () => {
-    it("busca somente o endpoint público sem cache", async () => {
+    it("busca com tags e cache ISR", async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => [],
@@ -230,7 +230,9 @@ describe("api", () => {
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining("/home-clientes"),
-        expect.objectContaining({ cache: "no-store" }),
+        expect.objectContaining({
+          next: expect.objectContaining({ revalidate: 600, tags: ["home-clientes"] }),
+        }),
       );
     });
   });
@@ -253,7 +255,7 @@ describe("api", () => {
   });
 
   describe("enviarLead()", () => {
-    it("faz POST para /leads", async () => {
+    it("faz POST para /leads com header Content-Type", async () => {
       const mockResponse = { id: "1", message: "Lead criado" };
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -278,7 +280,7 @@ describe("api", () => {
       );
     });
 
-    it("usa revalidate: 0 para leads", async () => {
+    it("usa cache no-store para envio de leads", async () => {
       const mockResponse = { id: "1", message: "Lead criado" };
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -295,7 +297,7 @@ describe("api", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          next: expect.objectContaining({ revalidate: 0 }),
+          cache: "no-store",
         }),
       );
     });

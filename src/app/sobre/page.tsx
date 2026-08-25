@@ -31,6 +31,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const revalidate = 600; // 10 minutes ISR cache
+
 export default function SobrePage() {
   return (
     <>

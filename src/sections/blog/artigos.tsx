@@ -88,31 +88,40 @@ export function BlogArtigos() {
       api.solucoes().catch(() => []),
       api.fabricantes().catch(() => []),
       api.produtos({ size: 100 }).catch(() => null),
+      api.configBlog().catch(() => null),
     ])
-      .then(([page, solucoesList, fabricantesList, produtosPage]) => {
+      .then(([page, solucoesList, fabricantesList, produtosPage, configData]) => {
         const prods = produtosPage?.content || [];
         const mapped = page.content
           .filter((dto) => TIPO_MAP[dto.tipo])
           .map((dto) => conteudoToArtigo(dto, solucoesList, fabricantesList, prods));
+
+        let currentEyebrow = eyebrow;
+        let currentHeadline = headline;
+
+        if (configData) {
+          if (configData.artigosEyebrow) {
+            currentEyebrow = configData.artigosEyebrow;
+            setEyebrow(currentEyebrow);
+          }
+          if (configData.artigosHeadline) {
+            currentHeadline = configData.artigosHeadline;
+            setHeadline(currentHeadline);
+          }
+        }
+
         if (mapped.length > 0) {
           setArtigos(mapped);
           try {
             localStorage.setItem("infodive_blog_artigos_cache_v1", JSON.stringify({
               artigos: mapped,
-              eyebrow,
-              headline,
+              eyebrow: currentEyebrow,
+              headline: currentHeadline,
             }));
           } catch {}
         }
       })
       .catch(() => {});
-
-    api.configBlog()
-      .then((data) => {
-        if (data.artigosEyebrow) setEyebrow(data.artigosEyebrow);
-        if (data.artigosHeadline) setHeadline(data.artigosHeadline);
-      })
-      .catch(() => { /* mantém fallback */ });
   }, []);
 
   const artigosFiltrados =

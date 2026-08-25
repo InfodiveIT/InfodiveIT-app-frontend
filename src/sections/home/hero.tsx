@@ -105,63 +105,69 @@ const renderHeadline = (text: string, highlight?: string) => {
   );
 };
 
-export function Hero() {
+export type HeroProps = {
+  initialHeroData?: any
+  initialSlides?: any[]
+  initialPartners?: any[]
+}
+
+export function Hero({ initialHeroData, initialSlides, initialPartners }: HeroProps = {}) {
   const { scrollTo } = useSmoothScroll();
   const [activePartnerIndex, setActivePartnerIndex] = useState<number | null>(null);
-  const [slides, setSlides] = useState<any[] | null>(null);
-  const [partners, setPartners] = useState<any[]>(PARTNERS);
-  const [heroData, setHeroData] = useState<any>(null);
+  const [slides, setSlides] = useState<any[] | null>(initialSlides ?? SHOWCASE_SLIDES);
+  const [partners, setPartners] = useState<any[]>(initialPartners && initialPartners.length > 0 ? initialPartners : PARTNERS);
+  const [heroData, setHeroData] = useState<any>(initialHeroData ?? null);
 
   useEffect(() => {
-    console.log("Hero: fetching api.paginaHero('home')");
-    api.paginaHero('home')
-      .then((data) => {
-        console.log("Hero: fetched heroData successfully:", data);
-        if (data) {
-          setHeroData(data);
-        }
-      })
-      .catch((err) => {
-        console.error("Hero: failed to fetch heroData:", err);
-      });
+    // Se os dados já foram fornecidos via SSR, não dispara requisições no navegador
+    if (initialHeroData && initialSlides && initialPartners) return;
 
-    api.heroCarousel()
-      .then((data) => {
-        if (data && data.length > 0) {
-          const sorted = [...data].sort((a, b) => a.ordem - b.ordem);
-          setSlides(sorted.map((item) => ({
-            src: item.imagemUrl,
-            alt: "Dashboard Infodive " + item.ordem
-          })));
-        } else {
+    if (!heroData) {
+      api.paginaHero('home')
+        .then((data) => {
+          if (data) setHeroData(data);
+        })
+        .catch(() => {});
+    }
+
+    if (!initialSlides) {
+      api.heroCarousel()
+        .then((data) => {
+          if (data && data.length > 0) {
+            const sorted = [...data].sort((a, b) => a.ordem - b.ordem);
+            setSlides(sorted.map((item) => ({
+              src: item.imagemUrl,
+              alt: "Dashboard Infodive " + item.ordem
+            })));
+          } else {
+            setSlides(SHOWCASE_SLIDES);
+          }
+        })
+        .catch(() => {
           setSlides(SHOWCASE_SLIDES);
-        }
-      })
-      .catch((err) => {
-        console.error("Hero: failed to fetch carousel data:", err);
-        setSlides(SHOWCASE_SLIDES);
-      });
+        });
+    }
 
-    api.fabricantes()
-      .then((data) => {
-        if (data && data.length > 0) {
-          const sorted = [...data].sort((a, b) => a.ordem - b.ordem);
-          setPartners(sorted.map((p) => {
-            const staticPartner = PARTNERS.find((sp) => sp.name.toLowerCase() === p.nome.toLowerCase() || sp.name.toLowerCase() === p.slug.toLowerCase());
-            return {
-              name: p.nome,
-              description: p.descricaoCurta || p.descricao || "",
-              logo: p.logoUrl || staticPartner?.logo || "",
-              className: staticPartner?.className || "h-4 sm:h-5",
-              keepWhiteOnHover: staticPartner ? (staticPartner.keepWhiteOnHover ?? false) : true
-            };
-          }));
-        }
-      })
-      .catch((err) => {
-        console.error("Hero: failed to fetch partners:", err);
-      });
-  }, []);
+    if (!initialPartners) {
+      api.fabricantes()
+        .then((data) => {
+          if (data && data.length > 0) {
+            const sorted = [...data].sort((a, b) => a.ordem - b.ordem);
+            setPartners(sorted.map((p) => {
+              const staticPartner = PARTNERS.find((sp) => sp.name.toLowerCase() === p.nome.toLowerCase() || sp.name.toLowerCase() === p.slug.toLowerCase());
+              return {
+                name: p.nome,
+                description: p.descricaoCurta || p.descricao || "",
+                logo: p.logoUrl || staticPartner?.logo || "",
+                className: staticPartner?.className || "h-4 sm:h-5",
+                keepWhiteOnHover: staticPartner ? (staticPartner.keepWhiteOnHover ?? false) : true
+              };
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [initialHeroData, initialSlides, initialPartners]);
 
   const marqueePartners = [...partners, ...partners];
 

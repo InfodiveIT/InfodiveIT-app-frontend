@@ -1,3 +1,4 @@
+import { cache } from "react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import type { Product } from "@/lib/products-data"
@@ -41,7 +42,7 @@ function getIconName(icon: any): string {
   return 'default';
 }
 
-async function getProduct(slug: string): Promise<Product | null> {
+const getProduct = cache(async (slug: string): Promise<Product | null> => {
   try {
     const dto = await api.produto(slug)
     if (!dto || !dto.ativo) return null
@@ -78,9 +79,9 @@ async function getProduct(slug: string): Promise<Product | null> {
       logo: normalizeImageUrl(dto.fabricanteLogoUrl) || VENDOR_LOGOS[dto.fabricanteNome || ''] || '',
       logoClass: 'h-5',
       categoria: dto.categoriaNome || catObj?.nome || dto.categoriaSlug || '',
-      categoriaSlug: dto.categoriaSlug || '',
-      solucaoSlug: dto.solucaoSlug,
-      solucaoTitle: dto.solucaoNome,
+      categoriaSlug: dto.categoriaSlug || catObj?.slug || '',
+      solucaoSlug: dto.solucaoSlug || '',
+      solucaoTitle: dto.solucaoNome || '',
       subcategoria: dto.subcategoria || '',
       descricaoCurta: dto.descricaoCurta || '',
       descricaoCompleta: dto.descricaoCompleta || '',
@@ -89,15 +90,15 @@ async function getProduct(slug: string): Promise<Product | null> {
       servicosEyebrow: dto.servicosEyebrow || '',
       servicosTitulo: dto.servicosTitulo || '',
       servicosDescricao: dto.servicosDescricao || '',
-      destaque: dto.destaque,
+      destaque: dto.destaque ?? false,
       diferenciais,
       casosDeUso,
       servicos,
     }
-  } catch (e) {
+  } catch {
     return null
   }
-}
+})
 
 interface PageProps {
   params: {
@@ -105,9 +106,8 @@ interface PageProps {
   }
 }
 
-export const dynamic = 'force-dynamic'
 export const dynamicParams = true
-export const revalidate = 0
+export const revalidate = 300 // 5 minutes ISR cache
 
 export async function generateStaticParams() {
   try {

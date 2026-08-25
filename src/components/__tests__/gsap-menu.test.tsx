@@ -20,6 +20,17 @@ jest.mock("gsap", () => {
   };
 });
 
+jest.mock("@/lib/api", () => {
+  const actual = jest.requireActual("@/lib/api");
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      enviarLead: jest.fn().mockImplementation(() => new Promise(() => {})),
+    },
+  };
+});
+
 import { GsapMenu } from "../GsapMenu";
 
 function renderMenu() {
@@ -35,7 +46,7 @@ async function preencherFormularioValido(
   await user.type(screen.getByPlaceholderText("Sobrenome"), "Silva");
   await user.type(screen.getByPlaceholderText("E-mail"), "joao@example.com");
   await user.type(
-    screen.getByPlaceholderText("+000 (00) 00000-0000"),
+    screen.getByPlaceholderText("(00) 00000-0000"),
     "51999999999",
   );
   await user.type(screen.getByPlaceholderText("Nome da empresa"), "Infodive");
@@ -52,7 +63,7 @@ describe("GsapMenu (formulário de lead)", () => {
     expect(screen.getByPlaceholderText("Sobrenome")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("E-mail")).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("+000 (00) 00000-0000"),
+      screen.getByPlaceholderText("(00) 00000-0000"),
     ).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Nome da empresa")).toBeInTheDocument();
     expect(

@@ -8,7 +8,7 @@ export async function Clients() {
   try {
     const signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS)
     const [sectionPayload, payload] = await Promise.all([
-      api.secaoHome('clientes', signal, true),
+      api.secaoHome('clientes', signal, false),
       api.homeClientes(signal),
     ])
     const section = parseHomeClientsSection(sectionPayload)

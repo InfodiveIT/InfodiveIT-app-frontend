@@ -17,47 +17,22 @@ import veeamLogo from "@/assets/Veeam Logo.svg"
 import dellLogo from "@/assets/Dell Logo.svg"
 import acronisLogo from "@/assets/Acronis Logo.svg"
 import redhatPretoLogo from "@/assets/Red Hat Preto Logo.svg"
-import microsoftLogo from "@/assets/Microsoft Logo.svg"
-import { type StaticImageData } from "next/image"
+import { toFeaturedProduct, type FeaturedProduct } from "@/lib/converters"
 
-type FeaturedProduct = {
-  nome: string
-  slug: string
-  fabricanteNome: string
-  logoUrl: string | StaticImageData
-  categoria: string
-  descricao: string
-}
-
-const STATIC_LOGO_MAP: Record<string, StaticImageData> = {
-  ibm: ibmLogo,
-  veeam: veeamLogo,
-  dell: dellLogo,
-  acronis: acronisLogo,
-  "red-hat": redhatPretoLogo,
-  microsoft: microsoftLogo,
-}
-
-function toFeatured(dto: ProdutoResumoDTO): FeaturedProduct {
-  const logoUrl =
-    dto.fabricanteLogoUrl ||
-    STATIC_LOGO_MAP[dto.fabricanteSlug] ||
-    ibmLogo
-
-  return {
-    nome: dto.nome,
-    slug: dto.slug,
-    fabricanteNome: dto.fabricanteNome || dto.fabricanteSlug,
-    logoUrl,
-    categoria: dto.categoriaTitle || dto.categoriaSlug,
-    descricao: dto.descricaoCurta || "",
+export type ProductsProps = {
+  initialProducts?: FeaturedProduct[]
+  initialSectionInfo?: {
+    eyebrow: string
+    headline: string
+    subtitulo: string
+    headlineDestaque?: string
   }
 }
 
-export function Products() {
-  const [products, setProducts] = React.useState<FeaturedProduct[]>([])
+export function Products({ initialProducts, initialSectionInfo }: ProductsProps = {}) {
+  const [products, setProducts] = React.useState<FeaturedProduct[]>(initialProducts ?? [])
   const [active, setActive] = React.useState("Todos")
-  const [sectionInfo, setSectionInfo] = React.useState({
+  const [sectionInfo, setSectionInfo] = React.useState(initialSectionInfo ?? {
     eyebrow: "Produtos",
     headline: "Produtos em destaque",
     subtitulo: "Uma seleção do nosso catálogo dos principais fabricantes do mundo — prontos para resolver desafios reais de infraestrutura, segurança e cloud.",
@@ -65,55 +40,61 @@ export function Products() {
   })
 
   React.useEffect(() => {
+    if (initialProducts && initialSectionInfo) return;
+
     try {
       const cached = localStorage.getItem("infodive_home_products_cache_v1")
       if (cached) {
         const parsed = JSON.parse(cached)
-        if (parsed.products && parsed.products.length > 0) setProducts(parsed.products)
-        if (parsed.sectionInfo) setSectionInfo(parsed.sectionInfo)
+        if (parsed.products && parsed.products.length > 0 && !initialProducts) setProducts(parsed.products)
+        if (parsed.sectionInfo && !initialSectionInfo) setSectionInfo(parsed.sectionInfo)
       }
     } catch {}
 
     let currentProducts = products
     let currentInfo = sectionInfo
 
-    api.produtos({ destaque: true, size: 6 })
-      .then((res) => {
-        if (res.content.length > 0) {
-          const mapped = res.content.map(toFeatured)
-          setProducts(mapped)
-          currentProducts = mapped
-          try {
-            localStorage.setItem("infodive_home_products_cache_v1", JSON.stringify({
-              products: currentProducts,
-              sectionInfo: currentInfo,
-            }))
-          } catch {}
-        }
-      })
-      .catch(() => { /* mantém fallback */ })
-
-    api.secaoHome("produtos")
-      .then((data) => {
-        if (data) {
-          const infoObj = {
-            eyebrow: data.eyebrow || "Produtos",
-            headline: data.headline || "Produtos em destaque",
-            subtitulo: data.subtitulo || "Uma seleção do nosso catálogo dos principais fabricantes do mundo — prontos para resolver desafios reais de infraestrutura, segurança e cloud.",
-            headlineDestaque: data.headlineDestaque || "",
+    if (!initialProducts) {
+      api.produtos({ destaque: true, size: 6 })
+        .then((res) => {
+          if (res.content.length > 0) {
+            const mapped = res.content.map(toFeaturedProduct)
+            setProducts(mapped)
+            currentProducts = mapped
+            try {
+              localStorage.setItem("infodive_home_products_cache_v1", JSON.stringify({
+                products: currentProducts,
+                sectionInfo: currentInfo,
+              }))
+            } catch {}
           }
-          setSectionInfo(infoObj)
-          currentInfo = infoObj
-          try {
-            localStorage.setItem("infodive_home_products_cache_v1", JSON.stringify({
-              products: currentProducts,
-              sectionInfo: currentInfo,
-            }))
-          } catch {}
-        }
-      })
-      .catch(() => { /* mantém fallback */ })
-  }, [])
+        })
+        .catch(() => { /* mantém fallback */ })
+    }
+
+    if (!initialSectionInfo) {
+      api.secaoHome("produtos")
+        .then((data) => {
+          if (data) {
+            const infoObj = {
+              eyebrow: data.eyebrow || "Produtos",
+              headline: data.headline || "Produtos em destaque",
+              subtitulo: data.subtitulo || "Uma seleção do nosso catálogo dos principais fabricantes do mundo — prontos para resolver desafios reais de infraestrutura, segurança e cloud.",
+              headlineDestaque: data.headlineDestaque || "",
+            }
+            setSectionInfo(infoObj)
+            currentInfo = infoObj
+            try {
+              localStorage.setItem("infodive_home_products_cache_v1", JSON.stringify({
+                products: currentProducts,
+                sectionInfo: currentInfo,
+              }))
+            } catch {}
+          }
+        })
+        .catch(() => { /* mantém fallback */ })
+    }
+  }, [initialProducts, initialSectionInfo])
 
   const categories = ["Todos", ...Array.from(new Set(products.map((p) => p.categoria)))]
   const filtered = active === "Todos" ? products : products.filter((p) => p.categoria === active)

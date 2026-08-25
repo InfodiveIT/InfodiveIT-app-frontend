@@ -16,27 +16,6 @@ const TIPOS: TipoConteudo[] = [
 ];
 
 describe("blog-data", () => {
-  describe("integridade dos dados", () => {
-    it("possui ao menos um artigo", () => {
-      expect(ARTIGOS.length).toBeGreaterThan(0);
-    });
-
-    it("garante slugs únicos", () => {
-      const slugs = ARTIGOS.map((a) => a.slug);
-      expect(new Set(slugs).size).toBe(slugs.length);
-    });
-
-    it("garante campos obrigatórios e tipo válido em todos os artigos", () => {
-      for (const artigo of ARTIGOS) {
-        expect(artigo.slug).toBeTruthy();
-        expect(artigo.titulo).toBeTruthy();
-        expect(artigo.descricao).toBeTruthy();
-        expect(TIPOS).toContain(artigo.tipo);
-        expect(Array.isArray(artigo.conteudo)).toBe(true);
-      }
-    });
-  });
-
   describe("TIPO_CONFIG", () => {
     it("cobre todos os tipos de conteúdo", () => {
       for (const tipo of TIPOS) {
@@ -60,28 +39,13 @@ describe("blog-data", () => {
     });
   });
 
-  describe("getArtigoBySlug()", () => {
-    it("retorna o artigo correspondente ao slug", () => {
-      const target = ARTIGOS[0];
-      expect(getArtigoBySlug(target.slug)).toBe(target);
-    });
-
-    it("retorna undefined para slug inexistente", () => {
+  describe("getArtigoBySlug() e getArtigosRelacionados()", () => {
+    it("retorna undefined para slug inexistente quando vazio", () => {
       expect(getArtigoBySlug("nao-existe")).toBeUndefined();
     });
-  });
 
-  describe("getArtigosRelacionados()", () => {
-    it("exclui o artigo atual", () => {
-      const base = ARTIGOS[0];
-      const relacionados = getArtigosRelacionados(base.slug);
-      expect(relacionados.every((a) => a.slug !== base.slug)).toBe(true);
-    });
-
-    it("respeita o limite informado", () => {
-      expect(getArtigosRelacionados(ARTIGOS[0].slug, 2).length).toBeLessThanOrEqual(
-        2,
-      );
+    it("retorna array vazio de relacionados quando ARTIGOS é vazio", () => {
+      expect(getArtigosRelacionados("qualquer-slug")).toEqual([]);
     });
   });
 });

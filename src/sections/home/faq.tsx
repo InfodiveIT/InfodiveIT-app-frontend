@@ -6,17 +6,23 @@ import { Reveal } from "@/components/animations/reveal"
 import { useSmoothScroll } from "@/hooks/use-smooth-scroll"
 import { api } from "@/lib/api"
 
-type FAQItem = {
+export type FAQItem = {
   question: string
   answer: string
 }
 
-export function FAQ() {
+export type FAQProps = {
+  initialItems?: FAQItem[]
+}
+
+export function FAQ({ initialItems }: FAQProps = {}) {
   const { scrollTo } = useSmoothScroll()
-  const [items, setItems] = useState<FAQItem[]>([])
+  const [items, setItems] = useState<FAQItem[]>(initialItems ?? [])
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   useEffect(() => {
+    if (initialItems && initialItems.length > 0) return;
+
     api.faq()
       .then((data) => {
         if (data.length > 0) {
@@ -24,7 +30,7 @@ export function FAQ() {
         }
       })
       .catch(() => {})
-  }, [])
+  }, [initialItems])
 
   const toggle = (index: number) => {
     setActiveIndex(activeIndex === index ? null : index)

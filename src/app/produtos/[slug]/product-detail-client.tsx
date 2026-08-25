@@ -96,6 +96,8 @@ function ServicesDiagram({ product }: { product: Product }) {
             <Image
               src={fabLogo}
               alt={product.fabricante}
+              width={50}
+              height={28}
               className="h-7 w-auto max-w-[50px] object-contain"
               unoptimized
             />
@@ -144,6 +146,8 @@ function ServicesDiagram({ product }: { product: Product }) {
             <Image
               src={fabLogo}
               alt={product.fabricante}
+              width={64}
+              height={44}
               className="h-11 w-auto max-w-[64px] object-contain"
               unoptimized
             />
@@ -294,6 +298,8 @@ export function ProductDetailContent({
                       <Image
                         src={fabLogo}
                         alt={product.fabricante}
+                        width={120}
+                        height={32}
                         className="h-8 w-auto object-contain"
                         unoptimized
                       />
@@ -358,6 +364,8 @@ export function ProductDetailContent({
                     <Image
                       src={fabLogo}
                       alt={product.fabricante}
+                      width={160}
+                      height={40}
                       className="h-10 w-auto max-w-[160px] object-contain opacity-30 brightness-0 invert"
                       unoptimized
                     />
@@ -497,6 +505,8 @@ export function ProductDetailContent({
                           <Image
                             src={lightLogo}
                             alt={product.fabricante}
+                            width={112}
+                            height={28}
                             className="max-h-7 w-auto object-contain"
                             unoptimized
                           />

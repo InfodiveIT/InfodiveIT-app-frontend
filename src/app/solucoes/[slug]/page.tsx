@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Solution } from "@/lib/solutions-data";
@@ -6,8 +7,8 @@ import { SolutionDetailContent } from "./solution-detail-client";
 import { Footer } from "@/layout/footer";
 import { api } from "@/lib/api";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamicParams = true;
+export const revalidate = 600; // 10 minutes ISR cache
 
 interface PageProps {
   params: {
@@ -15,7 +16,7 @@ interface PageProps {
   };
 }
 
-async function getSolution(slug: string): Promise<Solution | null> {
+const getSolution = cache(async (slug: string): Promise<Solution | null> => {
   try {
     const cat = await api.solucao(slug);
     if (cat && cat.ativo) {
@@ -25,9 +26,7 @@ async function getSolution(slug: string): Promise<Solution | null> {
   } catch {
     return null;
   }
-}
-
-export const dynamicParams = true;
+});
 
 // Pre-generate dynamic paths at build time for ultimate performance
 export async function generateStaticParams() {
