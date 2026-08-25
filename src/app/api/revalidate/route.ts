@@ -1,5 +1,4 @@
 import { revalidateTag, revalidatePath } from 'next/cache';
-import { NextResponse } from 'next/server';
 
 const RESOURCE_TAG_MAP: Record<string, string> = {
   'categorias': 'categorias',
@@ -29,30 +28,40 @@ const RESOURCE_TAG_MAP: Record<string, string> = {
   'sobre-cultura': 'sobre-cultura',
 };
 
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 export async function POST(request: Request) {
   try {
-    const secret = process.env.REVALIDATE_SECRET;
+    const configuredSecret = process.env.REVALIDATE_SECRET;
+
+    // Fail-closed: se a variável de ambiente não estiver configurada, rejeita imediatamente
+    if (!configuredSecret || configuredSecret.trim() === '') {
+      return json(
+        { message: 'Revalidation endpoint is disabled (secret not configured)' },
+        401
+      );
+    }
+
     const authHeader = request.headers.get('authorization');
     const secretHeader = request.headers.get('x-revalidate-secret');
-    const url = new URL(request.url);
-    const secretParam = url.searchParams.get('secret');
 
-    if (secret) {
-      const isValid =
-        secretHeader === secret ||
-        secretParam === secret ||
-        authHeader === `Bearer ${secret}`;
+    const isBearerValid = authHeader === `Bearer ${configuredSecret}`;
+    const isHeaderValid = secretHeader === configuredSecret;
 
-      if (!isValid) {
-        return NextResponse.json(
-          { message: 'Invalid revalidation secret' },
-          { status: 401 }
-        );
-      }
+    if (!isBearerValid && !isHeaderValid) {
+      return json(
+        { message: 'Invalid or missing revalidation secret header' },
+        401
+      );
     }
 
     const body = await request.json().catch(() => ({}));
-    const { resource, tag, path } = body;
+    const { resource, tag, path } = body || {};
 
     const targetTag = tag || (resource ? RESOURCE_TAG_MAP[resource] : null);
 
@@ -66,15 +75,15 @@ export async function POST(request: Request) {
       revalidatePath('/', 'layout');
     }
 
-    return NextResponse.json({
+    return json({
       revalidated: true,
       tag: targetTag,
       now: Date.now(),
     });
   } catch (error: any) {
-    return NextResponse.json(
-      { message: error.message || 'Error revalidating' },
-      { status: 500 }
+    return json(
+      { message: error?.message || 'Error revalidating' },
+      500
     );
   }
 }
