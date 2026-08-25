@@ -12,7 +12,7 @@ function makeClient(index: number) {
 }
 
 describe('parseHomeClients', () => {
-  it.each([6, 7, 8, 9, 10, 11, 12])('aceita e ordena %i clientes válidos', (count) => {
+  it.each([6, 7, 8, 10, 12, 14, 20])('aceita e ordena %i clientes válidos', (count) => {
     const payload = Array.from({ length: count }, (_, index) => makeClient(count - index))
     const result = parseHomeClients(payload)
 
@@ -22,8 +22,8 @@ describe('parseHomeClients', () => {
     )
   })
 
-  it.each([5, 13])('rejeita uma coleção com %i clientes', (count) => {
-    const payload = Array.from({ length: count }, (_, index) => makeClient(index + 1))
+  it('rejeita uma coleção com menos de 6 clientes', () => {
+    const payload = Array.from({ length: 5 }, (_, index) => makeClient(index + 1))
     expect(parseHomeClients(payload)).toBeNull()
   })
 

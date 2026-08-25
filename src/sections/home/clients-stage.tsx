@@ -200,7 +200,7 @@ export function ClientsStage({
     })
   }, [currentLogoKeys])
 
-  if (visibleClients.length < 6 || visibleClients.length > 12) {
+  if (visibleClients.length < 6) {
     return null
   }
 
@@ -218,14 +218,18 @@ export function ClientsStage({
     setMobileSelectedId((current) => (current === clientId ? null : clientId))
   }
 
-  // Divide as logos em duas esteiras equilibradas
-  const half = Math.ceil(visibleClients.length / 2)
-  const row1 = visibleClients.slice(0, half)
-  const row2 = visibleClients.slice(half)
+  // Distribuição alternada (Round-Robin):
+  // Índice 0, 2, 4, 6... (ordens 1, 3, 5, 7...) -> Linha 1 (esteira superior)
+  // Índice 1, 3, 5, 7... (ordens 2, 4, 6, 8...) -> Linha 2 (esteira inferior)
+  // Ao adicionar mais logos no painel, uma vai para cima e a próxima para baixo automaticamente!
+  const row1 = visibleClients.filter((_, index) => index % 2 === 0)
+  const row2 = visibleClients.filter((_, index) => index % 2 !== 0)
 
-  // Duplicamos as esteiras para criar o loop contínuo infinito perfeito
-  const repeatedRow1 = [...row1, ...row1, ...row1, ...row1]
-  const repeatedRow2 = [...row2, ...row2, ...row2, ...row2]
+  // Duplicamos as esteiras proporcionalmente para garantir loop infinito contínuo em qualquer tela
+  const repeatRow1 = Math.max(2, Math.ceil(10 / Math.max(row1.length, 1)))
+  const repeatRow2 = Math.max(2, Math.ceil(10 / Math.max(row2.length, 1)))
+  const repeatedRow1 = Array.from({ length: repeatRow1 }, () => row1).flat()
+  const repeatedRow2 = Array.from({ length: repeatRow2 }, () => row2).flat()
 
   const selectedMobileClient =
     visibleClients.find((c) => c.id === mobileSelectedId) ?? null

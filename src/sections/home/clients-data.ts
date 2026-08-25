@@ -12,7 +12,7 @@ export const clienteHomeSchema = z.object({
   segmento: z.string().trim().min(1).max(80),
   descricaoCurta: z.string().trim().min(1).max(220),
   logoUrl: httpsUrl,
-  ordem: z.number().int().min(1).max(12),
+  ordem: z.number().int().min(1),
 })
 
 const clientesHomeSectionSchema = z.object({
@@ -50,7 +50,7 @@ const clientesHomeSchema = z.array(clienteHomeSchema).superRefine((clients, cont
 export function parseHomeClients(payload: unknown): ClienteHomeDTO[] | null {
   const parsed = clientesHomeSchema.safeParse(payload)
 
-  if (!parsed.success || parsed.data.length < 6 || parsed.data.length > 12) {
+  if (!parsed.success || parsed.data.length < 6) {
     return null
   }
 
