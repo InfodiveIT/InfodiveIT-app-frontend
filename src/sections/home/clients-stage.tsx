@@ -6,7 +6,6 @@ import {
   FloatingPortal,
   offset,
   shift,
-  useClick,
   useDismiss,
   useFloating,
   useFocus,
@@ -28,10 +27,10 @@ type ClientsStageProps = {
 type MarqueeLogoItemProps = {
   client: ClienteHomeDTO
   desktop: boolean
-  open: boolean
+  placement?: 'top' | 'bottom'
   mobileDetailsId: string
-  onToggle: () => void
-  onOpenChange: (open: boolean) => void
+  onSelectMobile: () => void
+  isMobileSelected: boolean
   onImageError: () => void
 }
 
@@ -56,22 +55,22 @@ function useMediaQuery(query: string) {
 function MarqueeLogoItem({
   client,
   desktop,
-  open,
+  placement = 'bottom',
   mobileDetailsId,
-  onToggle,
-  onOpenChange,
+  onSelectMobile,
+  isMobileSelected,
   onImageError,
 }: MarqueeLogoItemProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
   const { refs, floatingStyles, context } = useFloating({
-    open,
-    onOpenChange,
-    placement: 'top',
+    open: desktop && isOpen,
+    onOpenChange: setIsOpen,
+    placement,
     strategy: 'fixed',
-    middleware: [offset(14), flip({ padding: 16 }), shift({ padding: 16 })],
-    whileElementsMounted: open
-      ? (reference, floating, update) =>
-          autoUpdate(reference, floating, update, { animationFrame: true })
-      : undefined,
+    middleware: [offset(12), flip({ padding: 16 }), shift({ padding: 16 })],
+    whileElementsMounted: (reference, floating, update) =>
+      autoUpdate(reference, floating, update, { animationFrame: true }),
   })
 
   const hover = useHover(context, { enabled: desktop, mouseOnly: true, move: false })
@@ -87,8 +86,10 @@ function MarqueeLogoItem({
   ])
 
   const buttonProps = desktop
-    ? getReferenceProps({ onClick: onToggle })
-    : { onClick: onToggle }
+    ? getReferenceProps()
+    : { onClick: onSelectMobile }
+
+  const isHighlighted = desktop ? isOpen : isMobileSelected
 
   return (
     <div className="relative flex items-center justify-center shrink-0" data-client-card>
@@ -97,16 +98,25 @@ function MarqueeLogoItem({
         type="button"
         tabIndex={0}
         aria-label={`Conhecer ${client.nome}`}
-        aria-expanded={!desktop ? open : undefined}
+        aria-expanded={!desktop ? isMobileSelected : undefined}
         aria-controls={!desktop ? mobileDetailsId : undefined}
         {...buttonProps}
         className={cn(
-          'group relative flex h-16 sm:h-20 w-36 sm:w-48 md:w-56 items-center justify-center px-4 sm:px-6 outline-none transition-all duration-300 cursor-pointer',
-          'hover:scale-110 focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:rounded-xl',
-          open && 'scale-110',
+          'group relative flex h-16 sm:h-20 w-36 sm:w-48 md:w-56 items-center justify-center rounded-2xl border transition-all duration-300 outline-none cursor-pointer px-4 sm:px-6',
+          'border-white/[0.07] bg-white/[0.025] backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.4)]',
+          'hover:border-white/[0.18] hover:bg-white/[0.07] hover:scale-105 hover:shadow-[0_8px_30px_rgba(0,0,0,0.7)]',
+          'focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:border-brand-accent',
+          isHighlighted &&
+            'border-brand-accent/60 bg-white/[0.08] shadow-[0_0_25px_rgba(14,102,255,0.35)] scale-105',
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element -- Logos do Supabase */}
+        {/* Glow sutil no hover */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-tr from-brand-accent/0 via-brand-accent/5 to-white/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        />
+
+        {/* eslint-disable-next-line @next/next/no-img-element -- Logos com cores originais */}
         <img
           src={client.logoUrl}
           alt={client.nome}
@@ -117,20 +127,20 @@ function MarqueeLogoItem({
           referrerPolicy="no-referrer"
           onError={onImageError}
           className={cn(
-            'h-full max-h-8 sm:max-h-10 md:max-h-11 w-full object-contain brightness-0 invert opacity-55 transition-all duration-300',
-            'group-hover:opacity-100 group-hover:drop-shadow-[0_0_18px_rgba(14,102,255,0.7)] group-focus-visible:opacity-100',
-            open && 'opacity-100 drop-shadow-[0_0_20px_rgba(14,102,255,0.8)]',
+            'h-full max-h-9 sm:max-h-11 md:max-h-12 w-full object-contain transition-all duration-300 opacity-80',
+            'group-hover:opacity-100 group-hover:scale-105 group-focus-visible:opacity-100',
+            isHighlighted && 'opacity-100 scale-105',
           )}
         />
       </button>
 
-      {desktop && open && (
+      {desktop && isOpen && (
         <FloatingPortal>
           <div
             ref={refs.setFloating}
             style={floatingStyles}
             {...getFloatingProps()}
-            className="z-[100] w-[min(300px,calc(100vw-32px))] rounded-xl border border-white/15 bg-ink-950/95 p-4 text-left shadow-[0_12px_40px_rgba(0,0,0,0.85)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
+            className="z-[100] w-[min(320px,calc(100vw-32px))] rounded-xl border border-white/15 bg-ink-950/95 p-4 text-left shadow-[0_16px_45px_rgba(0,0,0,0.9)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
           >
             <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
               <p className="text-sm font-semibold text-white tracking-tight">{client.nome}</p>
@@ -156,7 +166,7 @@ export function ClientsStage({
 }: ClientsStageProps) {
   const mobileDetailsId = useId()
   const [failedLogos, setFailedLogos] = useState<Set<string>>(() => new Set())
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [mobileSelectedId, setMobileSelectedId] = useState<string | null>(null)
   const desktop = useMediaQuery('(min-width: 1024px)')
 
   const currentLogoKeys = useMemo(
@@ -189,8 +199,8 @@ export function ClientsStage({
     })
   }
 
-  const toggleClient = (clientId: string) => {
-    setActiveId((current) => (current === clientId ? null : clientId))
+  const toggleMobileClient = (clientId: string) => {
+    setMobileSelectedId((current) => (current === clientId ? null : clientId))
   }
 
   // Divide as logos em duas esteiras equilibradas
@@ -202,13 +212,14 @@ export function ClientsStage({
   const repeatedRow1 = [...row1, ...row1, ...row1, ...row1]
   const repeatedRow2 = [...row2, ...row2, ...row2, ...row2]
 
-  const selectedClient = visibleClients.find((c) => c.id === activeId) ?? null
+  const selectedMobileClient =
+    visibleClients.find((c) => c.id === mobileSelectedId) ?? null
 
   return (
     <section
       id="clientes"
       aria-labelledby="clientes-heading"
-      className="relative isolate overflow-hidden bg-ink-950 py-20 sm:py-28 text-white"
+      className="relative isolate overflow-hidden bg-ink-950 py-24 sm:py-32 text-white"
     >
       {/* Background radial glow sutil */}
       <div
@@ -217,7 +228,7 @@ export function ClientsStage({
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-accent/10 blur-[140px]"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[450px] w-[650px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-accent/10 blur-[150px]"
       />
 
       {/* Header da Seção */}
@@ -237,9 +248,9 @@ export function ClientsStage({
       </header>
 
       {/* Dual Infinite Marquee Container com Máscara de Gradiente nas Bordas */}
-      <div className="relative mx-auto mt-14 flex flex-col gap-6 sm:gap-8 w-full [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]">
+      <div className="relative mx-auto mt-16 sm:mt-20 flex flex-col gap-6 sm:gap-8 w-full [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]">
         {/* Linha 1 — Marquee deslizando para a esquerda */}
-        <div className="group flex overflow-hidden select-none">
+        <div className="group flex overflow-hidden select-none py-1">
           <div
             className="flex shrink-0 items-center justify-around gap-6 sm:gap-8 animate-marquee group-hover:[animation-play-state:paused]"
             style={{ '--marquee-duration': '32s' } as React.CSSProperties}
@@ -249,10 +260,10 @@ export function ClientsStage({
                 key={`r1-${client.id}-${index}`}
                 client={client}
                 desktop={desktop}
-                open={activeId === client.id}
+                placement="bottom"
                 mobileDetailsId={mobileDetailsId}
-                onToggle={() => toggleClient(client.id)}
-                onOpenChange={(isOpen) => setActiveId(isOpen ? client.id : null)}
+                onSelectMobile={() => toggleMobileClient(client.id)}
+                isMobileSelected={mobileSelectedId === client.id}
                 onImageError={() => markImageFailed(client)}
               />
             ))}
@@ -260,7 +271,7 @@ export function ClientsStage({
         </div>
 
         {/* Linha 2 — Marquee deslizando para a direita (reverse) */}
-        <div className="group flex overflow-hidden select-none">
+        <div className="group flex overflow-hidden select-none py-1">
           <div
             className="flex shrink-0 items-center justify-around gap-6 sm:gap-8 animate-marquee-reverse group-hover:[animation-play-state:paused]"
             style={{ '--marquee-duration': '36s' } as React.CSSProperties}
@@ -270,10 +281,10 @@ export function ClientsStage({
                 key={`r2-${client.id}-${index}`}
                 client={client}
                 desktop={desktop}
-                open={activeId === client.id}
+                placement="top"
                 mobileDetailsId={mobileDetailsId}
-                onToggle={() => toggleClient(client.id)}
-                onOpenChange={(isOpen) => setActiveId(isOpen ? client.id : null)}
+                onSelectMobile={() => toggleMobileClient(client.id)}
+                isMobileSelected={mobileSelectedId === client.id}
                 onImageError={() => markImageFailed(client)}
               />
             ))}
@@ -291,16 +302,16 @@ export function ClientsStage({
             aria-live="polite"
             className="relative z-30 mx-auto min-h-[90px] w-full max-w-md rounded-xl border border-white/10 bg-ink-900/90 p-4 text-center backdrop-blur-xl"
           >
-            {selectedClient ? (
+            {selectedMobileClient ? (
               <>
                 <div className="flex items-center justify-center gap-2">
-                  <p className="text-sm font-semibold text-white">{selectedClient.nome}</p>
+                  <p className="text-sm font-semibold text-white">{selectedMobileClient.nome}</p>
                   <span className="rounded bg-brand-accent/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand-accent border border-brand-accent/25">
-                    {selectedClient.segmento}
+                    {selectedMobileClient.segmento}
                   </span>
                 </div>
                 <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-ink-300">
-                  {selectedClient.descricaoCurta}
+                  {selectedMobileClient.descricaoCurta}
                 </p>
               </>
             ) : (
