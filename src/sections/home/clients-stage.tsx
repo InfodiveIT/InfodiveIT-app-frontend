@@ -13,8 +13,10 @@ import {
   useInteractions,
   useRole,
 } from '@floating-ui/react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useId, useMemo, useState } from 'react'
 import type { ClienteHomeDTO } from '@/lib/api'
+import { InteractiveGridPattern } from '@/components/animations/interactive-grid-pattern'
 import { cn } from '@/lib/utils'
 
 type ClientsStageProps = {
@@ -68,7 +70,7 @@ function MarqueeLogoItem({
     onOpenChange: setIsOpen,
     placement,
     strategy: 'fixed',
-    middleware: [offset(12), flip({ padding: 16 }), shift({ padding: 16 })],
+    middleware: [offset(10), flip({ padding: 16 }), shift({ padding: 16 })],
     whileElementsMounted: (reference, floating, update) =>
       autoUpdate(reference, floating, update, { animationFrame: true }),
   })
@@ -78,7 +80,7 @@ function MarqueeLogoItem({
   const dismiss = useDismiss(context, { enabled: desktop, escapeKey: true, outsidePress: true })
   const role = useRole(context, { enabled: desktop, role: 'tooltip' })
 
-  const { getReferenceProps, getFloatingProps } = useInteractions([
+  const { getReferenceProps } = useInteractions([
     hover,
     focus,
     dismiss,
@@ -125,7 +127,7 @@ function MarqueeLogoItem({
             'h-full max-h-8 sm:max-h-10 md:max-h-12 w-full object-contain transition-all duration-300',
             isSaquePague
               ? 'brightness-0 invert opacity-70 group-hover:brightness-100 group-hover:invert-0 group-hover:opacity-100 group-hover:scale-105'
-              : 'opacity-85 group-hover:opacity-100 group-hover:scale-105',
+              : 'opacity-80 group-hover:opacity-100 group-hover:scale-105',
             'group-focus-visible:opacity-100',
             isHighlighted &&
               (isSaquePague
@@ -135,26 +137,38 @@ function MarqueeLogoItem({
         />
       </button>
 
-      {desktop && isOpen && (
-        <FloatingPortal>
-          <div
-            ref={refs.setFloating}
-            style={floatingStyles}
-            {...getFloatingProps()}
-            className="z-[100] w-[min(320px,calc(100vw-32px))] rounded-xl border border-white/15 bg-ink-950/95 p-4 text-left shadow-[0_16px_45px_rgba(0,0,0,0.9)] backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
-          >
-            <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
-              <p className="text-sm font-semibold text-white tracking-tight">{client.nome}</p>
-              <span className="rounded bg-brand-accent/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand-accent border border-brand-accent/25">
-                {client.segmento}
-              </span>
+      <AnimatePresence>
+        {desktop && isOpen && (
+          <FloatingPortal>
+            <div
+              ref={refs.setFloating}
+              style={{
+                ...floatingStyles,
+                zIndex: 100,
+                pointerEvents: 'none',
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: placement === 'bottom' ? -4 : 4, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: placement === 'bottom' ? -4 : 4, scale: 0.98 }}
+                transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                className="w-[min(300px,calc(100vw-32px))] rounded-xl border border-white/12 bg-ink-950/95 p-3.5 text-left shadow-[0_12px_36px_rgba(0,0,0,0.85)] backdrop-blur-2xl"
+              >
+                <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+                  <p className="text-xs font-semibold text-white tracking-normal">{client.nome}</p>
+                  <span className="rounded bg-brand-accent/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-brand-accent border border-brand-accent/20">
+                    {client.segmento}
+                  </span>
+                </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-ink-300">
+                  {client.descricaoCurta}
+                </p>
+              </motion.div>
             </div>
-            <p className="mt-2.5 text-xs leading-relaxed text-ink-300">
-              {client.descricaoCurta}
-            </p>
-          </div>
-        </FloatingPortal>
-      )}
+          </FloatingPortal>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -220,36 +234,41 @@ export function ClientsStage({
     <section
       id="clientes"
       aria-labelledby="clientes-heading"
-      className="relative isolate overflow-hidden bg-ink-950 py-24 sm:py-32 text-white"
+      className="relative isolate overflow-hidden bg-ink-950 py-20 md:py-28 text-white"
     >
-      {/* Background radial glow sutil */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] [background-size:48px_48px]"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[450px] w-[650px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-accent/10 blur-[150px]"
+      {/* Background Interactive Grid matching Hero pattern */}
+      <InteractiveGridPattern
+        width={48}
+        height={48}
+        squares={[30, 20]}
+        className="absolute inset-0 h-full w-full stroke-white/[0.04] [mask-image:radial-gradient(ellipse_at_center,white_20%,transparent_75%)] opacity-30 pointer-events-none"
+        squaresClassName="hover:fill-brand/10 transition-all duration-150"
       />
 
-      {/* Header da Seção */}
-      <header className="relative z-30 mx-auto max-w-3xl px-4 text-center">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-brand-accent sm:text-xs">
+      {/* Ambient Blue Glow Center */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[450px] w-[650px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/10 blur-[150px]"
+      />
+
+      {/* Header da Seção padronizado com o Design System */}
+      <div className="container-default relative z-10 text-center px-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-accent mb-3 sm:mb-4">
           {eyebrow}
         </p>
         <h2
           id="clientes-heading"
-          className="mt-3 text-balance text-2xl font-semibold tracking-[-0.035em] text-white sm:text-3xl lg:text-[clamp(2rem,3.2vw,3rem)]"
+          className="text-balance text-3xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white max-w-4xl leading-[1.15] mx-auto"
         >
           {headline}
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-pretty text-xs font-light leading-relaxed text-ink-300 sm:text-sm">
+        <p className="text-balance text-sm sm:text-base md:text-base text-ink-300 max-w-2xl leading-relaxed mx-auto px-4 mt-3 sm:mt-4">
           {subtitle}
         </p>
-      </header>
+      </div>
 
       {/* Dual Infinite Marquee Container com Máscara de Gradiente nas Bordas */}
-      <div className="relative mx-auto mt-16 sm:mt-20 flex flex-col gap-6 sm:gap-8 w-full [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]">
+      <div className="relative mx-auto mt-14 sm:mt-16 flex flex-col gap-6 sm:gap-8 w-full [mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)]">
         {/* Linha 1 — Marquee deslizando para a esquerda */}
         <div className="group flex overflow-hidden select-none py-1">
           <div
@@ -295,7 +314,7 @@ export function ClientsStage({
 
       {/* Painel de detalhes institucional para Mobile */}
       {!desktop && (
-        <div className="px-4 mt-8">
+        <div className="container-default px-4 mt-8">
           <div
             id={mobileDetailsId}
             role="region"
