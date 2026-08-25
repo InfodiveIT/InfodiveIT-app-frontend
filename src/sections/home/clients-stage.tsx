@@ -91,6 +91,10 @@ function MarqueeLogoItem({
 
   const isHighlighted = desktop ? isOpen : isMobileSelected
 
+  const normalizedName = client.nome.toLowerCase()
+  const isSaquePague =
+    normalizedName.includes('saque') || normalizedName.includes('pague')
+
   return (
     <div className="relative flex items-center justify-center shrink-0" data-client-card>
       <button
@@ -102,21 +106,12 @@ function MarqueeLogoItem({
         aria-controls={!desktop ? mobileDetailsId : undefined}
         {...buttonProps}
         className={cn(
-          'group relative flex h-16 sm:h-20 w-36 sm:w-48 md:w-56 items-center justify-center rounded-2xl border transition-all duration-300 outline-none cursor-pointer px-4 sm:px-6',
-          'border-white/[0.07] bg-white/[0.025] backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.4)]',
-          'hover:border-white/[0.18] hover:bg-white/[0.07] hover:scale-105 hover:shadow-[0_8px_30px_rgba(0,0,0,0.7)]',
-          'focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:border-brand-accent',
-          isHighlighted &&
-            'border-brand-accent/60 bg-white/[0.08] shadow-[0_0_25px_rgba(14,102,255,0.35)] scale-105',
+          'group relative flex h-14 sm:h-16 md:h-20 w-32 sm:w-44 md:w-56 items-center justify-center outline-none cursor-pointer px-3 sm:px-5 transition-transform duration-300',
+          'hover:scale-110 focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:rounded-lg',
+          isHighlighted && 'scale-110',
         )}
       >
-        {/* Glow sutil no hover */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-tr from-brand-accent/0 via-brand-accent/5 to-white/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        />
-
-        {/* eslint-disable-next-line @next/next/no-img-element -- Logos com cores originais */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- Logos integradas sem bordas */}
         <img
           src={client.logoUrl}
           alt={client.nome}
@@ -127,9 +122,15 @@ function MarqueeLogoItem({
           referrerPolicy="no-referrer"
           onError={onImageError}
           className={cn(
-            'h-full max-h-9 sm:max-h-11 md:max-h-12 w-full object-contain transition-all duration-300 opacity-80',
-            'group-hover:opacity-100 group-hover:scale-105 group-focus-visible:opacity-100',
-            isHighlighted && 'opacity-100 scale-105',
+            'h-full max-h-8 sm:max-h-10 md:max-h-12 w-full object-contain transition-all duration-300',
+            isSaquePague
+              ? 'brightness-0 invert opacity-70 group-hover:brightness-100 group-hover:invert-0 group-hover:opacity-100 group-hover:scale-105'
+              : 'opacity-85 group-hover:opacity-100 group-hover:scale-105',
+            'group-focus-visible:opacity-100',
+            isHighlighted &&
+              (isSaquePague
+                ? 'brightness-100 invert-0 opacity-100 scale-105'
+                : 'opacity-100 scale-105'),
           )}
         />
       </button>
