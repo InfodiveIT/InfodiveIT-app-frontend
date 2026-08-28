@@ -48,6 +48,24 @@ import {
 
 export const revalidate = 600 // Revalidate home every 10 minutes
 
+import { VENDOR_LOGOS } from '@/lib/vendor-logos'
+
+const VENDOR_HERO_CLASSES: Record<string, string> = {
+  IBM: 'h-5 sm:h-6',
+  AWS: 'h-7 sm:h-10',
+  Lenovo: 'h-5 sm:h-7',
+  'Dell Technologies': 'h-6 sm:h-8',
+  Dell: 'h-6 sm:h-8',
+  Veeam: 'h-6 sm:h-8',
+  Acronis: 'h-6 sm:h-9',
+  'Red Hat': 'h-7 sm:h-10',
+  Microsoft: 'h-6 sm:h-8',
+  SUSE: 'h-7 sm:h-10',
+  Virtuozzo: 'h-5 sm:h-7',
+  Apple: 'h-6 sm:h-8',
+  HPE: 'h-6 sm:h-8',
+}
+
 export default async function HomePage() {
   const [
     heroDataRes,
@@ -101,8 +119,8 @@ export default async function HomePage() {
           .map((p) => ({
             name: p.nome,
             description: p.descricaoCurta || p.descricao || '',
-            logo: p.logoUrl || '',
-            className: 'h-4 sm:h-5',
+            logo: p.logoUrl || VENDOR_LOGOS[p.nome] || '',
+            className: VENDOR_HERO_CLASSES[p.nome] || 'h-6 sm:h-8',
             keepWhiteOnHover: true,
           }))
       : undefined

@@ -38,6 +38,8 @@ import tela3 from "@/assets/telas-carrossel-hero/tela-3.webp";
 import { api } from "@/lib/api";
 import { useEffect } from "react";
 
+import { VENDOR_LOGOS } from "@/lib/vendor-logos";
+
 const SHOWCASE_SLIDES = [
   { src: tela1, alt: "Dashboard de monitoramento Infodive" },
   { src: tela2, alt: "Painel de indicadores Infodive" },
@@ -45,31 +47,33 @@ const SHOWCASE_SLIDES = [
 ];
 
 const PARTNERS = [
-  { name: "IBM", description: "Líder global em IA e nuvem híbrida segura.", logo: ibmLogo, className: "h-5 sm:h-6" },
-  { name: "AWS", description: "Nuvem de escala global com serviços avançados.", logo: awsLogo, className: "h-7 sm:h-10" },
-  { name: "Lenovo", description: "Infraestrutura robusta de servidores e alta performance.", logo: lenovoLogo, className: "h-5 sm:h-7", keepWhiteOnHover: true },
-  { name: "Dell Technologies", description: "Computação e armazenamento de ponta corporativo.", logo: dellLogo, className: "h-6 sm:h-8" },
-  { name: "Veeam", description: "Proteção moderna de dados e backup inteligente.", logo: veeamLogo, className: "h-6 sm:h-8" },
-  { name: "Acronis", description: "Integração inovadora de cibersegurança e backup.", logo: acronisLogo, className: "h-6 sm:h-9", keepWhiteOnHover: true },
-  { name: "Red Hat", description: "Soluções open source corporativas e Kubernetes.", logo: redhatLogo, className: "h-7 sm:h-10" },
-  { name: "Microsoft", description: "A nuvem do Azure para escala e inovação global.", logo: microsoftLogo, className: "h-6 sm:h-8" },
-  { name: "SUSE", description: "Soluções corporativas de Linux e Kubernetes open.", logo: suseLogo, className: "h-7 sm:h-10", keepWhiteOnHover: true },
-  { name: "Virtuozzo", description: "Virtualização eficiente e hiperconvergência em nuvem.", logo: virtuozzoLogo, className: "h-5 sm:h-7", keepWhiteOnHover: true },
-  { name: "Apple", description: "Ecossistema tecnológico premium integrado.", logo: appleLogo, className: "h-6 sm:h-8", keepWhiteOnHover: true },
+  { name: "IBM", description: "Líder global em IA e nuvem híbrida segura.", logo: ibmLogo, className: "h-5 sm:h-7" },
+  { name: "AWS", description: "Nuvem de escala global com serviços avançados.", logo: awsLogo, className: "h-8 sm:h-10" },
+  { name: "Lenovo", description: "Infraestrutura robusta de servidores e alta performance.", logo: lenovoLogo, className: "h-6 sm:h-8", keepWhiteOnHover: true },
+  { name: "Dell Technologies", description: "Computação e armazenamento de ponta corporativo.", logo: dellLogo, className: "h-7 sm:h-9" },
+  { name: "Veeam", description: "Proteção moderna de dados e backup inteligente.", logo: veeamLogo, className: "h-7 sm:h-9" },
+  { name: "Acronis", description: "Integração inovadora de cibersegurança e backup.", logo: acronisLogo, className: "h-7 sm:h-9", keepWhiteOnHover: true },
+  { name: "Red Hat", description: "Soluções open source corporativas e Kubernetes.", logo: redhatLogo, className: "h-8 sm:h-10" },
+  { name: "Microsoft", description: "A nuvem do Azure para escala e inovação global.", logo: microsoftLogo, className: "h-7 sm:h-9" },
+  { name: "SUSE", description: "Soluções corporativas de Linux e Kubernetes open.", logo: suseLogo, className: "h-8 sm:h-10", keepWhiteOnHover: true },
+  { name: "Virtuozzo", description: "Virtualização eficiente e hiperconvergência em nuvem.", logo: virtuozzoLogo, className: "h-6 sm:h-8", keepWhiteOnHover: true },
+  { name: "Apple", description: "Ecossistema tecnológico premium integrado.", logo: appleLogo, className: "h-7 sm:h-9", keepWhiteOnHover: true },
 ];
 
 const MOBILE_LOGO_CLASSES: Record<string, string> = {
-  IBM: "h-7",
-  AWS: "h-9",
-  Lenovo: "h-7",
-  "Dell Technologies": "h-9",
-  Veeam: "h-8",
-  Acronis: "h-9",
-  "Red Hat": "h-10",
-  Microsoft: "h-9",
-  SUSE: "h-9",
-  Virtuozzo: "h-7",
-  Apple: "h-9",
+  IBM: "h-6 sm:h-7",
+  AWS: "h-8 sm:h-10",
+  Lenovo: "h-6 sm:h-8",
+  "Dell Technologies": "h-7 sm:h-9",
+  Dell: "h-7 sm:h-9",
+  Veeam: "h-7 sm:h-9",
+  Acronis: "h-7 sm:h-9",
+  "Red Hat": "h-8 sm:h-10",
+  Microsoft: "h-7 sm:h-9",
+  SUSE: "h-8 sm:h-10",
+  Virtuozzo: "h-6 sm:h-8",
+  Apple: "h-7 sm:h-9",
+  HPE: "h-7 sm:h-9",
 };
 
 const renderHeadline = (text: string, highlight?: string) => {
@@ -303,6 +307,8 @@ export function Hero({ initialHeroData, initialSlides, initialPartners }: HeroPr
         >
           {marqueePartners.map((partner, index) => {
             const isActive = activePartnerIndex === index;
+            const logoSrc = partner.logo || (VENDOR_LOGOS as any)[partner.name] || (VENDOR_LOGOS as any)[partner.name.replace(' Technologies', '')] || partner.logo;
+            const logoClass = partner.className || MOBILE_LOGO_CLASSES[partner.name] || "h-6 sm:h-8";
             return (
               <React.Fragment key={index}>
                 {/* Mobile: Simple, flat card without heavy follow glows */}
@@ -319,9 +325,9 @@ export function Hero({ initialHeroData, initialSlides, initialPartners }: HeroPr
                     )}
                   >
                     {/* Logo Container */}
-                    <div className="h-7 sm:h-10 flex items-center justify-center mb-2">
+                    <div className="h-8 sm:h-10 flex items-center justify-center mb-2">
                       <Image
-                        src={partner.logo}
+                        src={logoSrc}
                         alt={`${partner.name} logo`}
                         width={120}
                         height={32}
@@ -330,7 +336,7 @@ export function Hero({ initialHeroData, initialSlides, initialPartners }: HeroPr
                           isActive
                             ? (partner.keepWhiteOnHover ? "brightness-0 invert opacity-100" : "brightness-100 invert-0 opacity-100")
                             : "brightness-0 invert opacity-50",
-                          MOBILE_LOGO_CLASSES[partner.name] || "h-8"
+                          logoClass
                         )}
                         unoptimized
                       />
@@ -373,9 +379,9 @@ export function Hero({ initialHeroData, initialSlides, initialPartners }: HeroPr
                   >
                     <CardContent className="p-2.5 pt-4 sm:p-4 flex flex-col items-center justify-between text-center h-full min-h-[120px] sm:min-h-[136px]">
                       {/* Logo Container */}
-                      <div className="h-7 sm:h-10 flex items-center justify-center mb-2">
+                      <div className="h-8 sm:h-10 flex items-center justify-center mb-2">
                         <Image
-                          src={partner.logo}
+                          src={logoSrc}
                           alt={`${partner.name} logo`}
                           width={120}
                           height={32}
@@ -384,7 +390,7 @@ export function Hero({ initialHeroData, initialSlides, initialPartners }: HeroPr
                             isActive
                               ? (partner.keepWhiteOnHover ? "brightness-0 invert opacity-100" : "brightness-100 invert-0 opacity-100")
                               : "brightness-0 invert opacity-50 group-hover:opacity-100 group-hover:brightness-100 group-hover:invert-0",
-                            partner.className || "h-5 sm:h-8"
+                            logoClass
                           )}
                           unoptimized
                         />
