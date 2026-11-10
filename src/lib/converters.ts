@@ -6,7 +6,7 @@ import {
   type ConteudoDTO,
   normalizeImageUrl,
 } from "@/lib/api"
-import { VENDOR_LOGOS } from "@/lib/vendor-logos"
+import { VENDOR_LOGOS, getVendorLogo } from "@/lib/vendor-logos"
 import type { Product } from "@/lib/products-data"
 import ibmLogo from "@/assets/IBM Logo.svg"
 import veeamLogo from "@/assets/Veeam Logo.svg"
@@ -69,9 +69,11 @@ export type FeaturedProduct = {
 
 export function toFeaturedProduct(dto: ProdutoResumoDTO): FeaturedProduct {
   const logoUrl =
-    dto.fabricanteLogoUrl ||
-    STATIC_LOGO_MAP[dto.fabricanteSlug] ||
-    ibmLogo
+    getVendorLogo(
+      dto.fabricanteNome || dto.fabricanteSlug,
+      dto.fabricanteLogoUrl || STATIC_LOGO_MAP[dto.fabricanteSlug],
+      "light"
+    ) || ibmLogo
 
   return {
     nome: dto.nome,

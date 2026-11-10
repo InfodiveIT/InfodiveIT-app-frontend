@@ -389,7 +389,10 @@ export function Hero({ initialHeroData, initialSlides, initialPartners }: HeroPr
                             "w-auto object-contain transition-all duration-300",
                             isActive
                               ? (partner.keepWhiteOnHover ? "brightness-0 invert opacity-100" : "brightness-100 invert-0 opacity-100")
-                              : "brightness-0 invert opacity-50 group-hover:opacity-100 group-hover:brightness-100 group-hover:invert-0",
+                              : cn(
+                                  "brightness-0 invert opacity-50 group-hover:opacity-100",
+                                  !partner.keepWhiteOnHover && "group-hover:brightness-100 group-hover:invert-0"
+                                ),
                             logoClass
                           )}
                           unoptimized

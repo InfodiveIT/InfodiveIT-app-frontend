@@ -6,7 +6,7 @@ import Image from "next/image";
 import { ArrowLeft, Server, ShieldCheck } from "lucide-react";
 import { type Solution } from "@/lib/solutions-data";
 import { resolveLucideIcon } from "@/lib/lucide-icon-resolver";
-import { VENDOR_LOGOS } from "@/lib/vendor-logos";
+import { VENDOR_LOGOS, getVendorLogo } from "@/lib/vendor-logos";
 import { InteractiveGridPattern } from "@/components/animations/interactive-grid-pattern";
 import { Reveal } from "@/components/animations/reveal";
 import { GlowBorderOverlay, handleGlowMove } from "@/components/ui/glow-border";
@@ -187,7 +187,7 @@ export function SolutionDetailContent({
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {solution.vendors.map((vendorName) => {
                         const vendorObj = solution.vendorObjects?.find(v => v.nome === vendorName);
-                        const logoAsset = normalizeImageUrl(vendorObj?.logoUrl) || VENDOR_LOGOS[vendorName];
+                        const logoAsset = getVendorLogo(vendorName, normalizeImageUrl(vendorObj?.logoUrl), "light");
                         return (
                           <div
                             key={vendorName}

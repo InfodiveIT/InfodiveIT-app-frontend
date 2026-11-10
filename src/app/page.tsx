@@ -50,6 +50,14 @@ export const revalidate = 600 // Revalidate home every 10 minutes
 
 import { VENDOR_LOGOS } from '@/lib/vendor-logos'
 
+const KEEP_WHITE_ON_HOVER = new Set([
+  'Virtuozzo',
+  'Apple',
+  'Lenovo',
+  'Acronis',
+  'SUSE',
+])
+
 const VENDOR_HERO_CLASSES: Record<string, string> = {
   IBM: 'h-5 sm:h-6',
   AWS: 'h-7 sm:h-10',
@@ -121,7 +129,7 @@ export default async function HomePage() {
             description: p.descricaoCurta || p.descricao || '',
             logo: p.logoUrl || VENDOR_LOGOS[p.nome] || '',
             className: VENDOR_HERO_CLASSES[p.nome] || 'h-6 sm:h-8',
-            keepWhiteOnHover: true,
+            keepWhiteOnHover: KEEP_WHITE_ON_HOVER.has(p.nome),
           }))
       : undefined
 

@@ -20,8 +20,7 @@ import {
   Cog
 } from "lucide-react"
 import type { Product } from "@/lib/products-data"
-import { VENDOR_LOGOS, VENDOR_URLS } from "@/lib/vendor-logos"
-import redhatPretoLogo from "@/assets/Red Hat Preto Logo.svg"
+import { VENDOR_LOGOS, VENDOR_URLS, getVendorLogo, shouldInvertLogoOnDark } from "@/lib/vendor-logos"
 import { InteractiveGridPattern } from "@/components/animations/interactive-grid-pattern"
 import { AnimatedBeam } from "@/components/animations/animated-beam"
 import { Reveal } from "@/components/animations/reveal"
@@ -81,7 +80,7 @@ function ServicesDiagram({ product }: { product: Product }) {
     serviceRefs.current = servicosList.map(() => createRef<HTMLDivElement>())
   }
 
-  const fabLogo = product.logo || (product.fabricante === "Red Hat" ? redhatPretoLogo : VENDOR_LOGOS[product.fabricante])
+  const fabLogo = getVendorLogo(product.fabricante, product.logo, "light")
   const dynamicHeightClass = count > 4 ? "min-h-[420px]" : "min-h-[340px]"
   const flexGapClass = count > 4 ? "gap-2 sm:gap-2.5" : "gap-3.5 sm:gap-4"
   const curvatureStep = count > 4 ? 28 : 45
@@ -235,8 +234,9 @@ export function ProductDetailContent({
 
   const related = relatedProducts || []
   const rawLogo = normalizeImageUrl(product.logo) || VENDOR_LOGOS[product.fabricante]
-  const fabLogo = rawLogo
-  const lightLogo = rawLogo || (product.fabricante === "Red Hat" ? redhatPretoLogo : fabLogo)
+  const fabLogo = getVendorLogo(product.fabricante, rawLogo, "dark")
+  const invertDarkLogo = shouldInvertLogoOnDark(product.fabricante)
+  const lightLogo = getVendorLogo(product.fabricante, rawLogo, "light")
 
   return (
     <div className="relative z-20 w-full min-h-screen bg-white text-ink-900">
@@ -300,7 +300,7 @@ export function ProductDetailContent({
                         alt={product.fabricante}
                         width={120}
                         height={32}
-                        className="h-8 w-auto object-contain"
+                        className={`h-8 w-auto object-contain${invertDarkLogo ? " brightness-0 invert" : ""}`}
                         unoptimized
                       />
                     ) : (

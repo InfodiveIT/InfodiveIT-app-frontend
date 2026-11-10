@@ -18,6 +18,7 @@ import dellLogo from "@/assets/Dell Logo.svg"
 import acronisLogo from "@/assets/Acronis Logo.svg"
 import redhatPretoLogo from "@/assets/Red Hat Preto Logo.svg"
 import { toFeaturedProduct, type FeaturedProduct } from "@/lib/converters"
+import { getVendorLogo } from "@/lib/vendor-logos"
 
 export type ProductsProps = {
   initialProducts?: FeaturedProduct[]
@@ -168,7 +169,7 @@ export function Products({ initialProducts, initialSectionInfo }: ProductsProps 
                     <GlowBorderOverlay glowColor="#0E66FF" glowSize={240} />
                     <div className="relative flex items-center justify-between gap-3">
                       <Image
-                        src={produto.logoUrl}
+                        src={getVendorLogo(produto.fabricanteNome, produto.logoUrl, "light")}
                         alt={produto.fabricanteNome}
                         width={120}
                         height={32}

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { GlowBorderOverlay, handleGlowMove } from "@/components/ui/glow-border"
 import { Badge } from "@/components/ui/badge"
 import type { Product } from "@/lib/products-data"
+import { getVendorLogo } from "@/lib/vendor-logos"
 
 /** Card de produto reusável (catálogo e "produtos relacionados"). */
 export function ProductCard({
@@ -16,6 +17,8 @@ export function ProductCard({
   product: Product
   className?: string
 }) {
+  const logoSrc = getVendorLogo(product.fabricante || product.fabricanteSlug, product.logo, "light")
+
   return (
     <Link
       href={`/produtos/${product.slug}`}
@@ -28,9 +31,9 @@ export function ProductCard({
       <GlowBorderOverlay glowColor="#0E66FF" glowSize={240} />
 
       <div className="relative flex items-center justify-between gap-3">
-        {product.logo ? (
+        {logoSrc ? (
           <Image
-            src={product.logo}
+            src={logoSrc}
             alt={product.fabricante}
             width={120}
             height={32}
